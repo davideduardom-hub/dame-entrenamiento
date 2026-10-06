@@ -669,8 +669,9 @@ function freshState(){
        dias:6,gym:true,onboard:false,ritmo:'moderado',objetivos:['grasa','resistencia'],impacto:'bajo',
        meds:[],
        ayuno:{activo:false,preset:'16:8',inicio:'12:00',fin:'20:00'},
+       alternativas:[],
        nota:''},
-  log:{}, weights:SEED_W.map(x=>({d:x[0],w:x[1],bf:x[2]})), custom:[], favs:[], recent:[], tests:{}, v:2
+  log:{}, weights:SEED_W.map(x=>({d:x[0],w:x[1],bf:x[2]})), custom:[], favs:[], recent:[], tests:{}, antojos:[], v:2
  };
 }
 let S=load();
@@ -681,7 +682,7 @@ function load(){
 function migrate(o){
  const f=freshState();
  Object.keys(f.cfg).forEach(k=>{if(o.cfg[k]===undefined)o.cfg[k]=f.cfg[k];});
- o.tests=o.tests||{}; o.custom=o.custom||[]; o.favs=o.favs||[]; o.weights=o.weights||f.weights;
+ o.tests=o.tests||{}; o.antojos=o.antojos||[]; o.custom=o.custom||[]; o.favs=o.favs||[]; o.weights=o.weights||f.weights;
  if(o.v!==2){ o.cfg.onboard=false; o.v=2; Object.keys(o.log||{}).forEach(k=>{if(o.log[k])o.log[k].sw=null;}); }
  return o;
 }
@@ -800,6 +801,7 @@ function rHoy(){
   '</div></div>';
 
  h+=rVentana();
+ h+='<button class="btn" style="background:var(--violet);color:#15121f;margin-bottom:12px" onclick="antojoSheet()">Tengo un antojo ahora</button>';
  // semáforo
  const al=[];
  if(t.azucar)al.push(t.azucar+' con azúcar añadida');
@@ -864,7 +866,8 @@ function rComida(){
  let h='<header class="top"><div><h1>Comida</h1><div class="sub">'+Math.round(t.kcal)+' de '+c.kcal+' kcal · '+Math.round(t.p)+' g de proteína</div></div></header>';
  h+='<div class="row" style="margin-bottom:12px"><button class="btn" onclick="handSheet()">Estimar por manos</button><button class="btn ghost" onclick="searchSheet()">Buscar alimento</button></div>';
  h+='<div class="row" style="margin-bottom:10px"><button class="btn ghost sm" style="flex:1" onclick="photoSheet()">Añadir foto del plato</button><button class="btn ghost sm" style="flex:1" onclick="repeatYesterday()">Repetir ayer</button></div>';
- h+='<button class="btn ghost sm" style="width:100%;margin-bottom:14px" onclick="costoSheet()">Proteína y fibra al menor costo</button>';
+ h+='<button class="btn ghost sm" style="width:100%;margin-bottom:10px" onclick="costoSheet()">Proteína y fibra al menor costo</button>';
+ h+='<button class="btn ghost sm" style="width:100%;margin-bottom:14px" onclick="antojoSheet()">Tengo un antojo ahora</button>';
 
  if(S.favs.length){
   h+='<div class="card tight"><h2>Tus habituales</h2><div class="chips">'+
@@ -1315,6 +1318,7 @@ function rProgreso(){
   '<b style="font-size:14px">'+s[0]+'</b><span class="num" style="font-weight:700;color:'+(s[2]===null?'var(--text-faint)':(s[2]?'var(--teal)':'var(--amber)'))+'">'+s[1]+'</span></div>'+
   '<div class="faint" style="margin-top:3px">'+s[3]+'</div></div>').join('')+'</div>';
 
+ h+=rAntojos();
  h+=rTests();
 
  const full=days.filter(k=>dayStatus(k)===2).length, part=days.filter(k=>dayStatus(k)===1).length;
@@ -1372,6 +1376,8 @@ function rAjustes(){
   '<button class="btn ghost sm" style="width:100%;margin-top:12px" onclick="S.cfg.onboard=false;save();render()">Volver a configurar todo</button></div>';
  h+=rPlanCard();
 
+ h+='<div class="card"><h2>Antojos y ansiedad</h2><div class="muted" style="margin-bottom:10px">El botón morado de la pantalla de Hoy abre una pausa de diez minutos, te ayuda a distinguir hambre de ansiedad y guarda cómo terminó. Nunca te va a decir que no comas.</div>'+
+  '<button class="btn ghost sm" style="width:100%" onclick="editAlternativas()">Editar mis alternativas</button></div>';
  h+='<div class="card"><h2>Ayuno intermitente</h2><div class="muted" style="margin-bottom:10px">'+(S.cfg.ayuno&&S.cfg.ayuno.activo?('Ventana activa de '+S.cfg.ayuno.inicio+' a '+S.cfg.ayuno.fin+'.'):'Sin ventana activa.')+' Define en qué horas comes y la app te lleva la cuenta.</div>'+
   '<button class="btn ghost sm" style="width:100%" onclick="ayunoSheet()">Configurar la ventana</button></div>';
  h+='<div class="card"><h2>Comer bien con poco presupuesto</h2><div class="muted" style="margin-bottom:10px">Qué comprar para llegar a tu proteína y tu fibra gastando lo menos posible. Edita los precios con los que pagas tú y la lista se reordena sola.</div>'+
@@ -1649,6 +1655,124 @@ function restoreSheet(){
 function storageVivo(){
  try{localStorage.setItem('plandm_t','1');const r=localStorage.getItem('plandm_t')==='1';localStorage.removeItem('plandm_t');return r;}
  catch(e){return false;}
+}
+
+
+/* ---------- Antojos y ansiedad ---------- */
+const TRIGS=[['estres','Estrés'],['aburrim','Aburrimiento'],['cansancio','Cansancio o sueño'],
+ ['pendiente','Algo pendiente'],['solo','Soledad'],['ver','Vi u olí algo'],['costumbre','Costumbre de la hora'],['nose','No sé']];
+const ALTER=['Un vaso grande de agua y esperar','Bajar a caminar diez minutos','Lavarme los dientes',
+ 'Una ducha','Veinte sentadillas o diez flexiones','Salir del departamento cinco minutos',
+ 'Té caliente o café negro','Ordenar un espacio pequeño','Música y estirar','Escribir en dos líneas qué me está estresando',
+ 'Llamar o escribir a alguien'];
+function alternativas(){ return (S.cfg.alternativas&&S.cfg.alternativas.length)?S.cfg.alternativas:ALTER; }
+
+let ANS=null, ANST=null;
+function antojoSheet(){
+ ANS={paso:1,trig:null,int:3,accion:null,seg:600};
+ pintaAntojo();
+}
+function cerrarAntojo(){ clearInterval(ANST); ANS=null; closeSheet(); render(); }
+
+function respiracion(){
+ return '<svg viewBox="0 0 120 120" style="width:150px;height:150px;display:block;margin:0 auto">'+
+  '<circle cx="60" cy="60" r="26" fill="none" stroke="var(--border-solid)" stroke-width="1.5"/>'+
+  '<circle cx="60" cy="60" r="26" fill="color-mix(in srgb,var(--teal) 22%,transparent)" stroke="var(--teal)" stroke-width="2.5">'+
+   '<animate attributeName="r" dur="14s" repeatCount="indefinite" values="26;52;52;26;26" keyTimes="0;0.286;0.571;0.857;1" calcMode="spline" keySplines="0.4 0 0.6 1;0 0 1 1;0.4 0 0.6 1;0 0 1 1"/>'+
+  '</circle></svg>';
+}
+function pintaAntojo(){
+ if(!ANS)return;
+ let c='';
+ if(ANS.paso===1){
+  c='<div class="muted" style="margin-bottom:14px">No tienes que decidir nada todavía. Respira con el círculo: inhala mientras crece, sostén, suelta mientras baja. Diez minutos y vuelves a elegir.</div>'+
+   respiracion()+
+   '<div class="num" id="ansT" style="text-align:center;font-size:44px;font-weight:800;letter-spacing:-.04em;margin:10px 0 4px">10:00</div>'+
+   '<div class="faint" style="text-align:center;margin-bottom:16px">Casi todos los antojos bajan solos antes de que termine esta cuenta. No es fuerza de voluntad: es química que pasa.</div>'+
+   '<button class="btn" onclick="ANS.paso=2;pintaAntojo()">Ya puedo seguir</button>'+
+   '<button class="btn ghost" style="margin-top:9px" onclick="ANS.paso=4;pintaAntojo()">Prefiero comer algo ahora</button>';
+ }
+ if(ANS.paso===2){
+  const t=totals(CUR), v=ventana();
+  c='<div class="muted" style="margin-bottom:12px">Dos datos, sin juicio, para saber qué estás sintiendo de verdad.</div>'+
+   '<table class="kv" style="margin-bottom:14px">'+
+   '<tr><td>Has comido hoy</td><td class="num">'+Math.round(t.kcal)+' kcal de '+S.cfg.kcal+'</td></tr>'+
+   '<tr><td>Proteína</td><td class="num">'+Math.round(t.p)+' g de '+S.cfg.prot+'</td></tr>'+
+   (v?'<tr><td>Tu ventana</td><td class="num">'+(v.abierta?'abierta':'cerrada')+'</td></tr>':'')+
+   '</table>'+
+   '<div class="flag '+(t.kcal>S.cfg.kcal*0.7?'teal':'amber')+'"><span>'+(t.kcal>S.cfg.kcal*0.7?'✓':'!')+'</span><div>'+
+   (t.kcal>S.cfg.kcal*0.7
+     ? 'Comiste suficiente hoy. Lo que sientes probablemente no es hambre física, y eso no lo convierte en algo falso: es real, solo que la comida no es lo que lo resuelve.'
+     : 'Llevas pocas calorías para la hora que es. Puede que sí sea hambre de verdad. Si lo es, come, y que sea algo con proteína.')+'</div></div>'+
+   '<div style="margin:14px 0 8px;font-size:14px;font-weight:600">¿Qué pasó justo antes?</div>'+
+   '<div class="chips">'+TRIGS.map(t2=>'<button class="chip'+(ANS.trig===t2[0]?' on':'')+'" onclick="ANS.trig=\''+t2[0]+'\';pintaAntojo()">'+t2[1]+'</button>').join('')+'</div>'+
+   '<div style="margin:16px 0 8px;font-size:14px;font-weight:600">¿Qué tan fuerte lo sientes?</div>'+
+   '<div class="chips">'+[1,2,3,4,5].map(i=>'<button class="chip'+(ANS.int===i?' on':'')+'" onclick="ANS.int='+i+';pintaAntojo()">'+i+'</button>').join('')+'</div>'+
+   '<button class="btn" style="margin-top:18px" onclick="ANS.paso=3;pintaAntojo()">Siguiente</button>';
+ }
+ if(ANS.paso===3){
+  c='<div class="muted" style="margin-bottom:12px">Elige una y hazla ahora. No tiene que arreglarte el día: solo tiene que ocupar los próximos diez minutos.</div>'+
+   alternativas().map(a=>'<button class="block'+(ANS.accion===a?' done':'')+'" style="margin-bottom:8px" onclick="ANS.accion='+JSON.stringify(a).replace(/"/g,'&quot;')+';pintaAntojo()">'+
+    '<span class="tick">✓</span><span class="txt"><b>'+esc(a)+'</b></span></button>').join('')+
+   '<button class="btn" style="margin-top:8px" onclick="ANS.paso=4;pintaAntojo()">Listo, lo hice</button>'+
+   '<button class="btn ghost sm" style="width:100%;margin-top:9px" onclick="editAlternativas()">Cambiar esta lista</button>';
+ }
+ if(ANS.paso===4){
+  c='<div class="muted" style="margin-bottom:14px">Guarda cómo terminó. Esto no es una nota de conducta: es el dato que dentro de un mes te va a mostrar a qué hora y con qué te pasa.</div>'+
+   [['paso','Se me pasó'],['comi_poco','Comí algo pequeño'],['comi','Comí bastante']].map(r=>
+    '<button class="block'+(ANS.res===r[0]?' done':'')+'" style="margin-bottom:8px" onclick="ANS.res=\''+r[0]+'\';pintaAntojo()">'+
+    '<span class="tick">✓</span><span class="txt"><b>'+r[1]+'</b></span></button>').join('')+
+   '<button class="btn" style="margin-top:8px" onclick="guardarAntojo()">Guardar y cerrar</button>'+
+   '<div class="faint" style="margin-top:12px">Si comiste, no pasó nada y no se rompe nada. Un episodio no cambia tu semana; lo que la cambia es el patrón, y el patrón se ve con datos.</div>';
+ }
+ openSheet('<div class="hd"><b>'+['','Pausa','¿Hambre o ansiedad?','Haz otra cosa','¿Cómo terminó?'][ANS.paso]+'</b><button onclick="cerrarAntojo()">×</button></div>'+c);
+ clearInterval(ANST);
+ if(ANS.paso===1){
+  ANST=setInterval(()=>{
+   if(!ANS){clearInterval(ANST);return;}
+   ANS.seg--;
+   const e=document.getElementById('ansT');
+   if(e)e.textContent=Math.floor(ANS.seg/60)+':'+String(ANS.seg%60).padStart(2,'0');
+   if(ANS.seg<=0){clearInterval(ANST);ANS.paso=2;pintaAntojo();try{navigator.vibrate&&navigator.vibrate([150,80,150]);}catch(err){}}
+  },1000);
+ }
+}
+function guardarAntojo(){
+ S.antojos=S.antojos||[];
+ const h=new Date();
+ S.antojos.push({d:CUR,h:h.getHours()*60+h.getMinutes(),trig:ANS.trig||'nose',int:ANS.int,accion:ANS.accion||'',res:ANS.res||'paso'});
+ save(); cerrarAntojo();
+ toast('Guardado. Gracias por anotarlo.');
+}
+function editAlternativas(){
+ openSheet('<div class="hd"><b>Tus alternativas</b><button onclick="pintaAntojo()">×</button></div>'+
+ '<div class="muted" style="margin-bottom:10px">Una por línea. Pon solo cosas que de verdad puedas hacer en diez minutos desde donde sueles estar.</div>'+
+ '<textarea id="altL" style="min-height:160px">'+esc(alternativas().join('\n'))+'</textarea>'+
+ '<button class="btn" style="margin-top:12px" onclick="saveAlternativas()">Guardar</button>');
+}
+function saveAlternativas(){
+ S.cfg.alternativas=document.getElementById('altL').value.split('\n').map(x=>x.trim()).filter(Boolean);
+ save(); pintaAntojo();
+}
+function rAntojos(){
+ const A=(S.antojos||[]).filter(a=>parseD(a.d)>=new Date(Date.now()-30*864e5));
+ if(!A.length) return '<div class="card"><h2>Antojos</h2><div class="muted">Todavía no has registrado ninguno. Cada vez que uses el botón de ansiedad queda un dato aquí, y en dos semanas vas a ver tu patrón: a qué hora aparece y qué lo dispara.</div></div>';
+ const porTrig={}; A.forEach(a=>porTrig[a.trig]=(porTrig[a.trig]||0)+1);
+ const topT=Object.keys(porTrig).sort((a,b)=>porTrig[b]-porTrig[a])[0];
+ const franjas=[[0,'Madrugada'],[6,'Mañana'],[12,'Tarde'],[18,'Noche']];
+ const porF={}; A.forEach(a=>{const h=Math.floor(a.h/60);let f='Noche';franjas.forEach(x=>{if(h>=x[0])f=x[1];});porF[f]=(porF[f]||0)+1;});
+ const topF=Object.keys(porF).sort((a,b)=>porF[b]-porF[a])[0];
+ const pasaron=A.filter(a=>a.res==='paso').length;
+ return '<div class="card"><h2>Tus antojos, últimos 30 días</h2><table class="kv">'+
+  '<tr><td>Veces que los registraste</td><td class="num">'+A.length+'</td></tr>'+
+  '<tr><td>Disparador más frecuente</td><td class="num">'+(TRIGS.find(t=>t[0]===topT)||['','—'])[1]+'</td></tr>'+
+  '<tr><td>Franja donde más aparecen</td><td class="num">'+topF+'</td></tr>'+
+  '<tr><td>Se pasaron sin comer</td><td class="num">'+pasaron+' de '+A.length+'</td></tr></table>'+
+  '<div class="faint" style="margin-top:10px">'+
+  (pasaron/A.length>=0.5
+   ? 'Más de la mitad se fueron solos. Esa es la prueba de que esperar funciona, y la tienes con tus propios datos.'
+   : 'Todavía la mayoría termina en comida, y está bien: estás midiendo, que es el paso que casi nadie da. Mira la franja de arriba y prepara el ambiente justo para esa hora.')+
+  '</div></div>';
 }
 
 /* ---------- Medicación y suplementos ---------- */
