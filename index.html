@@ -791,8 +791,8 @@ function day(k){k=k||CUR;if(!S.log[k])S.log[k]={food:[],water:0,blocks:{},wo:nul
 let CUR=today();
 
 function totals(k){
- const t={kcal:0,p:0,c:0,f:0,fb:0,azucar:0,alcohol:0,frito:0};
- ((S.log[k]&&S.log[k].food)||[]).forEach(f=>{t.kcal+=f.kcal;t.p+=f.p;t.c+=f.c;t.f+=f.f;t.fb+=(f.fb||0);if(f.flag&&t[f.flag]!==undefined)t[f.flag]++;});
+ const t={kcal:0,p:0,c:0,f:0,fb:0,an:0,azucar:0,alcohol:0,frito:0};
+ ((S.log[k]&&S.log[k].food)||[]).forEach(f=>{t.kcal+=f.kcal;t.p+=f.p;t.c+=f.c;t.f+=f.f;t.fb+=(f.fb||0);if(f.an)t.an+=f.kcal;if(f.flag&&t[f.flag]!==undefined)t[f.flag]++;});
  Object.keys(t).forEach(x=>t[x]=Math.round(t[x]*10)/10);
  return t;
 }
@@ -890,6 +890,7 @@ function rHoy(){
  if(t.azucar)al.push(t.azucar+' con azúcar añadida');
  if(t.alcohol)al.push(t.alcohol+' con alcohol');
  if(t.frito)al.push(t.frito+' frito');
+ if(t.an>0) h+='<div class="flag" style="background:color-mix(in srgb,var(--violet) 12%,transparent);border-color:color-mix(in srgb,var(--violet) 40%,transparent)"><span>&middot;</span><div>'+Math.round(t.an)+' kcal de hoy vinieron de antojos, el '+Math.round(t.an/Math.max(1,t.kcal)*100)+'% de lo que llevas comido.</div></div>';
  if(al.length) h+='<div class="flag"><span>!</span><div>Hoy registraste '+al.join(', ')+'. Son los que más suben los triglicéridos. No pasa nada hoy; que no se vuelva el patrón de la semana.</div></div>';
  else if(t.kcal>400) h+='<div class="flag teal"><span>✓</span><div>Día limpio hasta ahora: sin azúcar añadida, sin alcohol y sin frituras.</div></div>';
 
@@ -965,7 +966,7 @@ function rComida(){
    h+='<div class="entry"><div style="display:flex;gap:9px;align-items:center;min-width:0">'+
     (f.ph?'<img class="ph-thumb" src="'+f.ph+'" alt="">':'')+
     '<div style="min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(f.n)+'</div>'+
-    '<div class="k">'+esc(f.q||'')+' · P'+Math.round(f.p)+' C'+Math.round(f.c)+' G'+Math.round(f.f)+(f.flag&&FLAGTXT[f.flag]?' · '+FLAGTXT[f.flag]:'')+'</div></div></div>'+
+    '<div class="k">'+(f.t!=null?hm(f.t)+' · ':'')+esc(f.q||'')+' · P'+Math.round(f.p)+' C'+Math.round(f.c)+' G'+Math.round(f.f)+(f.flag&&FLAGTXT[f.flag]?' · '+FLAGTXT[f.flag]:'')+(f.an?' · <span style="color:var(--violet)">antojo</span>':'')+'</div></div></div>'+
     '<div style="text-align:right;white-space:nowrap"><b class="num">'+Math.round(f.kcal)+'</b> <button style="color:var(--text-faint);padding:0 4px" onclick="delFood(\''+f.id+'\')">×</button></div></div>';
   });
   h+='</div></div>';
@@ -976,6 +977,8 @@ function delFood(id){const l=day(CUR);l.food=l.food.filter(f=>f.id!==id);save();
 function addEntry(o){
  const l=day(CUR);
  o.id=Math.random().toString(36).slice(2,9);
+ if(o.t===undefined){const n=new Date(); o.t=(CUR===today())?(n.getHours()*60+n.getMinutes()):null;}
+ if(ANTOJO_ON){o.an=1;ANTOJO_ON=false;}
  l.food.push(o); 
  S.favs=S.favs.filter(f=>f.n!==o.n); S.favs.unshift({n:o.n,kcal:Math.round(o.kcal),p:o.p,c:o.c,f:o.f,fb:o.fb||0,q:o.q,flag:o.flag,m:o.m});
  S.favs=S.favs.slice(0,14);
@@ -1402,6 +1405,7 @@ function rProgreso(){
   '<b style="font-size:14px">'+s[0]+'</b><span class="num" style="font-weight:700;color:'+(s[2]===null?'var(--text-faint)':(s[2]?'var(--teal)':'var(--amber)'))+'">'+s[1]+'</span></div>'+
   '<div class="faint" style="margin-top:3px">'+s[3]+'</div></div>').join('')+'</div>';
 
+ h+=rAyuno();
  h+=rAntojos();
  h+=rTests();
 
@@ -1810,7 +1814,12 @@ function pintaAntojo(){
    [['paso','Se me pasó'],['comi_poco','Comí algo pequeño'],['comi','Comí bastante']].map(r=>
     '<button class="block'+(ANS.res===r[0]?' done':'')+'" style="margin-bottom:8px" onclick="ANS.res=\''+r[0]+'\';pintaAntojo()">'+
     '<span class="tick">✓</span><span class="txt"><b>'+r[1]+'</b></span></button>').join('')+
-   '<button class="btn" style="margin-top:8px" onclick="guardarAntojo()">Guardar y cerrar</button>'+
+   ((ANS.res&&ANS.res!=='paso')
+     ? '<div class="faint" style="margin:14px 0 8px">Registra qué comiste para que esas calorías cuenten en tu día y sepas cuánto viene de aquí.</div>'+
+       '<button class="btn" onclick="guardarAntojo(1)">Guardar y anotar qué comí</button>'+
+       '<button class="btn ghost" style="margin-top:9px" onclick="guardarAntojo(2)">Estimarlo con las manos</button>'+
+       '<button class="btn ghost" style="margin-top:9px" onclick="guardarAntojo()">Guardar sin registrarlo</button>'
+     : '<button class="btn" style="margin-top:8px" onclick="guardarAntojo()">Guardar y cerrar</button>')+
    '<div class="faint" style="margin-top:12px">Si comiste, no pasó nada y no se rompe nada. Un episodio no cambia tu semana; lo que la cambia es el patrón, y el patrón se ve con datos.</div>';
  }
  openSheet('<div class="hd"><b>'+['','Pausa','¿Hambre o ansiedad?','Haz otra cosa','¿Cómo terminó?'][ANS.paso]+'</b><button onclick="cerrarAntojo()">×</button></div>'+c);
@@ -1825,11 +1834,13 @@ function pintaAntojo(){
   },1000);
  }
 }
-function guardarAntojo(){
+function guardarAntojo(luego){
  S.antojos=S.antojos||[];
  const h=new Date();
  S.antojos.push({d:CUR,h:h.getHours()*60+h.getMinutes(),trig:ANS.trig||'nose',int:ANS.int,accion:ANS.accion||'',res:ANS.res||'paso'});
- save(); cerrarAntojo();
+ save(); clearInterval(ANST); ANS=null; closeSheet(); render();
+ if(luego===1){registrarAntojoComida();return;}
+ if(luego===2){estimarAntojoComida();return;}
  toast('Guardado. Gracias por anotarlo.');
 }
 function editAlternativas(){
@@ -1855,7 +1866,13 @@ function rAntojos(){
   '<tr><td>Veces que los registraste</td><td class="num">'+A.length+'</td></tr>'+
   '<tr><td>Disparador más frecuente</td><td class="num">'+(TRIGS.find(t=>t[0]===topT)||['','—'])[1]+'</td></tr>'+
   '<tr><td>Franja donde más aparecen</td><td class="num">'+topF+'</td></tr>'+
-  '<tr><td>Se pasaron sin comer</td><td class="num">'+pasaron+' de '+A.length+'</td></tr></table>'+
+  '<tr><td>Se pasaron sin comer</td><td class="num">'+pasaron+' de '+A.length+'</td></tr>'+
+  '<tr><td>Calorías por antojo (7 días)</td><td class="num">'+kcalAntojos(7).an+' kcal</td></tr>'+
+  '<tr><td>Parte de todo lo que comiste</td><td class="num">'+kcalAntojos(7).pct+'%</td></tr>'+
+  '<tr><td>Promedio por día (7 días)</td><td class="num">'+Math.round(kcalAntojos(7).an/7)+' kcal</td></tr></table>'+
+  (kcalAntojos(7).pct>=20
+   ? '<div class="flag amber" style="margin-top:12px"><span>!</span><div>Una quinta parte de lo que comes viene de antojos. Ahí está tu déficit: no necesitas comer menos en las comidas, necesitas ganar la mitad de estos episodios.</div></div>'
+   : '')+
   '<div class="faint" style="margin-top:10px">'+
   (pasaron/A.length>=0.5
    ? 'Más de la mitad se fueron solos. Esa es la prueba de que esperar funciona, y la tienes con tus propios datos.'
@@ -1916,6 +1933,85 @@ function savePlanes(){
  }
  S.cfg.planes=out; save(); closeSheet(); render();
  toast(out.length?'Plan guardado':'Plan vacío');
+}
+
+/* ---------- Calorías que vienen de antojos ---------- */
+let ANTOJO_ON=false;
+function registrarAntojoComida(){
+ ANTOJO_ON=true;
+ searchSheet(mealNow());
+}
+function estimarAntojoComida(){
+ ANTOJO_ON=true;
+ handSheet();
+}
+function kcalAntojos(dias){
+ const desde=new Date(Date.now()-dias*864e5);
+ let an=0, tot=0;
+ Object.keys(S.log||{}).forEach(k=>{
+  if(parseD(k)<desde)return;
+  (S.log[k].food||[]).forEach(f=>{ tot+=f.kcal; if(f.an)an+=f.kcal; });
+ });
+ return {an:Math.round(an), tot:Math.round(tot), pct:tot?Math.round(an/tot*100):0};
+}
+
+/* ---------- Seguimiento del ayuno ---------- */
+function ventanaReal(k){
+ const f=((S.log[k]||{}).food||[]).filter(x=>typeof x.t==='number' && x.kcal>25);
+ if(!f.length)return null;
+ const ts=f.map(x=>x.t);
+ const ini=Math.min.apply(null,ts), fin=Math.max.apply(null,ts);
+ return {ini:ini, fin:fin, dur:Math.max(0,fin-ini), ayuno:1440-Math.max(0,fin-ini), n:f.length};
+}
+function hm(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.round(m%60)).padStart(2,'0');}
+function cumplioAyuno(k){
+ const v=ventanaReal(k), a=S.cfg.ayuno;
+ if(!v||!a||!a.activo)return null;
+ const i=hhmm(a.inicio), f=hhmm(a.fin);
+ return (v.ini>=i-20)&&(v.fin<=f+20);
+}
+function rAyuno(){
+ const a=S.cfg.ayuno;
+ const dias=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);dias.push(ymd(d));}
+ const con=dias.map(k=>({k:k,v:ventanaReal(k),ok:cumplioAyuno(k)})).filter(x=>x.v);
+ if(!a||!a.activo){
+  return '<div class="card"><h2>Ayuno intermitente</h2><div class="muted">No tienes ventana activa. Actívala y esta sección empieza a medir sola, a partir de la hora de tu primera y tu última comida registrada.</div>'+
+   '<button class="btn ghost sm" style="width:100%;margin-top:12px" onclick="ayunoSheet()">Activar mi ventana</button></div>';
+ }
+ if(!con.length){
+  return '<div class="card"><h2>Ayuno intermitente</h2><div class="muted">Ventana de '+a.inicio+' a '+a.fin+'. Todavía no hay comidas con hora registrada. En cuanto registres el almuerzo de hoy, esta sección empieza a llenarse sola: no tienes que anotar nada aparte.</div></div>';
+ }
+ const prom=con.reduce((s,x)=>s+x.v.ayuno,0)/con.length;
+ const ok=con.filter(x=>x.ok).length;
+ let racha=0;
+ for(let i=dias.length-1;i>=0;i--){const c=cumplioAyuno(dias[i]); if(c===true)racha++; else if(c===false)break;}
+ const i0=hhmm(a.inicio), f0=hhmm(a.fin);
+ const filas=dias.slice().reverse().map(k=>{
+  const v=ventanaReal(k), c=cumplioAyuno(k);
+  const d=parseD(k), et=['D','L','M','X','J','V','S'][d.getDay()]+' '+d.getDate();
+  const barra='<div style="position:relative;height:14px;background:var(--surface-2);border-radius:4px;overflow:hidden">'+
+   '<div style="position:absolute;top:0;bottom:0;left:'+(i0/1440*100)+'%;width:'+((f0-i0)/1440*100)+'%;border:1px dashed var(--border-solid);border-radius:4px"></div>'+
+   (v?'<div style="position:absolute;top:2px;bottom:2px;left:'+(v.ini/1440*100)+'%;width:'+(Math.max(1.5,v.dur/1440*100))+'%;background:'+(c?'var(--teal)':'var(--amber)')+';border-radius:3px"></div>':'')+
+   '</div>';
+  return '<div style="display:flex;align-items:center;gap:9px;padding:5px 0">'+
+   '<span class="faint num" style="width:34px;flex:none">'+et+'</span>'+
+   '<div style="flex:1">'+barra+'</div>'+
+   '<span class="faint num" style="width:92px;text-align:right;flex:none">'+(v?hm(v.ini)+'–'+hm(v.fin):'sin datos')+'</span></div>';
+ }).join('');
+ return '<div class="card"><h2>Ayuno intermitente</h2>'+
+  '<div class="faint" style="margin-bottom:10px">Ventana planificada de '+a.inicio+' a '+a.fin+'. Cada barra es tu ventana real, calculada con la hora de tu primera y tu última comida.</div>'+
+  filas+
+  '<table class="kv" style="margin-top:12px">'+
+  '<tr><td>Ayuno promedio</td><td class="num">'+Math.floor(prom/60)+' h '+Math.round(prom%60)+' min</td></tr>'+
+  '<tr><td>Días dentro de la ventana</td><td class="num">'+ok+' de '+con.length+'</td></tr>'+
+  '<tr><td>Racha actual</td><td class="num">'+racha+(racha===1?' día':' días')+'</td></tr>'+
+  '</table>'+
+  '<div class="faint" style="margin-top:10px">'+
+  (ok/con.length>=0.7
+   ? 'La ventana se está sosteniendo. Cuando pase de dos semanas así, deja de ser un esfuerzo y pasa a ser tu horario.'
+   : 'Todavía se te escapa seguido. Mira las barras naranjas: casi siempre el problema está en la hora de cierre, no en la de apertura.')+
+  '</div>'+
+  '<button class="btn ghost sm" style="width:100%;margin-top:12px" onclick="ayunoSheet()">Ajustar la ventana</button></div>';
 }
 
 /* ---------- Medicación y suplementos ---------- */
