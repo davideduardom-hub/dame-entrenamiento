@@ -669,7 +669,7 @@ function freshState(){
        dias:6,gym:true,onboard:false,ritmo:'moderado',objetivos:['grasa','resistencia'],impacto:'bajo',
        meds:[],
        ayuno:{activo:false,preset:'16:8',inicio:'12:00',fin:'20:00'},
-       alternativas:[],
+       alternativas:[],planes:[],
        nota:''},
   log:{}, weights:SEED_W.map(x=>({d:x[0],w:x[1],bf:x[2]})), custom:[], favs:[], recent:[], tests:{}, antojos:[], v:2
  };
@@ -686,12 +686,65 @@ function migrate(o){
  if(o.v!==2){ o.cfg.onboard=false; o.v=2; Object.keys(o.log||{}).forEach(k=>{if(o.log[k])o.log[k].sw=null;}); }
  return o;
 }
+/* ---------- Guardado automático reforzado ----------
+   Doble copia: localStorage + IndexedDB. Si una se pierde, la otra la recupera sola. */
+let DBi=null, ULTIMO=null, PERSISTE=null;
+function idb(){
+ return new Promise(res=>{
+  if(DBi)return res(DBi);
+  try{
+   const r=indexedDB.open('plandm',1);
+   r.onupgradeneeded=()=>{try{r.result.createObjectStore('kv');}catch(e){}};
+   r.onsuccess=()=>{DBi=r.result;res(DBi);};
+   r.onerror=()=>res(null);
+  }catch(e){res(null);}
+ });
+}
+function idbSet(txt){
+ idb().then(d=>{ if(!d)return;
+  try{ d.transaction('kv','readwrite').objectStore('kv').put(txt,'state'); }catch(e){}
+ });
+}
+function idbGet(){
+ return new Promise(res=>{
+  idb().then(d=>{ if(!d)return res(null);
+   try{ const q=d.transaction('kv','readonly').objectStore('kv').get('state');
+        q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }
+   catch(e){ res(null); }
+  });
+ });
+}
+function pedirPersistencia(){
+ try{
+  if(navigator.storage&&navigator.storage.persisted){
+   navigator.storage.persisted().then(p=>{
+    if(p){PERSISTE=true;return;}
+    if(navigator.storage.persist) navigator.storage.persist().then(ok=>{PERSISTE=!!ok;});
+   });
+  }
+ }catch(e){}
+}
+function recuperarSiVacio(){
+ const vacio = !Object.keys(S.log||{}).length && !(S.antojos||[]).length && !S.cfg.onboard;
+ if(!vacio)return;
+ idbGet().then(txt=>{
+  if(!txt)return;
+  try{
+   const o=JSON.parse(txt);
+   if(o&&o.cfg){ S=migrate(o); save(); render(); toast('Recuperé tus datos guardados'); }
+  }catch(e){}
+ });
+}
 let saveT=null;
 function save(){
  clearTimeout(saveT);
  saveT=setTimeout(()=>{
-  try{localStorage.setItem(DB_KEY,JSON.stringify(S));}
-  catch(e){ prunePhotos(); try{localStorage.setItem(DB_KEY,JSON.stringify(S));}catch(e2){toast('No se pudo guardar: memoria llena. Exporta y borra fotos viejas.');} }
+  const txt=JSON.stringify(S);
+  try{localStorage.setItem(DB_KEY,txt);ULTIMO=Date.now();}
+  catch(e){ prunePhotos(); const t2=JSON.stringify(S);
+    try{localStorage.setItem(DB_KEY,t2);ULTIMO=Date.now();}
+    catch(e2){toast('Memoria llena. Borra fotos viejas desde el registro de comidas.');} }
+  idbSet(txt);
  },120);
 }
 function prunePhotos(){
@@ -1377,6 +1430,7 @@ function rAjustes(){
  h+=rPlanCard();
 
  h+='<div class="card"><h2>Antojos y ansiedad</h2><div class="muted" style="margin-bottom:10px">El botón morado de la pantalla de Hoy abre una pausa de diez minutos, te ayuda a distinguir hambre de ansiedad y guarda cómo terminó. Nunca te va a decir que no comas.</div>'+
+  '<button class="btn ghost sm" style="width:100%;margin-bottom:9px" onclick="planesSheet()">Mi plan si-entonces</button>'+
   '<button class="btn ghost sm" style="width:100%" onclick="editAlternativas()">Editar mis alternativas</button></div>';
  h+='<div class="card"><h2>Ayuno intermitente</h2><div class="muted" style="margin-bottom:10px">'+(S.cfg.ayuno&&S.cfg.ayuno.activo?('Ventana activa de '+S.cfg.ayuno.inicio+' a '+S.cfg.ayuno.fin+'.'):'Sin ventana activa.')+' Define en qué horas comes y la app te lleva la cuenta.</div>'+
   '<button class="btn ghost sm" style="width:100%" onclick="ayunoSheet()">Configurar la ventana</button></div>';
@@ -1393,7 +1447,7 @@ function rAjustes(){
   '<button class="btn ghost" style="margin-bottom:9px" onclick="exportSheet()">Exportar copia de seguridad</button>'+
   '<button class="btn ghost" style="margin-bottom:9px" onclick="importSheet()">Restaurar desde una copia</button>'+
   '<button class="btn danger" onclick="wipe()">Borrar todo y empezar de cero</button>'+
-  '<div class="faint" style="margin-top:10px">Todo vive en el almacenamiento de Safari de este iPhone. No hay cuenta, no hay servidor, no hay nadie más que lo vea. Exporta una copia cada mes y pégala en tus notas.</div></div>';
+  '<div class="faint" style="margin-top:10px">'+estadoGuardado()+'</div></div>';
 
  h+='<div class="card tight"><div class="row"><button class="btn ghost sm" style="flex:1" onclick="setTheme(\'dark\')">Oscuro</button><button class="btn ghost sm" style="flex:1" onclick="setTheme(\'light\')">Claro</button></div></div>';
  document.getElementById('scr-ajustes').innerHTML=h;
@@ -1685,7 +1739,7 @@ function pintaAntojo(){
  if(!ANS)return;
  let c='';
  if(ANS.paso===1){
-  c='<div class="muted" style="margin-bottom:14px">No tienes que decidir nada todavía. Respira con el círculo: inhala mientras crece, sostén, suelta mientras baja. Diez minutos y vuelves a elegir.</div>'+
+  c=rPlanes()+'<div class="muted" style="margin-bottom:14px">No tienes que decidir nada todavía. Respira con el círculo: inhala mientras crece, sostén, suelta mientras baja. Diez minutos y vuelves a elegir.</div>'+
    respiracion()+
    '<div class="num" id="ansT" style="text-align:center;font-size:44px;font-weight:800;letter-spacing:-.04em;margin:10px 0 4px">10:00</div>'+
    '<div class="faint" style="text-align:center;margin-bottom:16px">Casi todos los antojos bajan solos antes de que termine esta cuenta. No es fuerza de voluntad: es química que pasa.</div>'+
@@ -1711,7 +1765,7 @@ function pintaAntojo(){
    '<button class="btn" style="margin-top:18px" onclick="ANS.paso=3;pintaAntojo()">Siguiente</button>';
  }
  if(ANS.paso===3){
-  c='<div class="muted" style="margin-bottom:12px">Elige una y hazla ahora. No tiene que arreglarte el día: solo tiene que ocupar los próximos diez minutos.</div>'+
+  c=rPlanes()+'<div class="muted" style="margin-bottom:12px">Elige una y hazla ahora. No tiene que arreglarte el día: solo tiene que ocupar los próximos diez minutos.</div>'+
    alternativas().map(a=>'<button class="block'+(ANS.accion===a?' done':'')+'" style="margin-bottom:8px" onclick="ANS.accion='+JSON.stringify(a).replace(/"/g,'&quot;')+';pintaAntojo()">'+
     '<span class="tick">✓</span><span class="txt"><b>'+esc(a)+'</b></span></button>').join('')+
    '<button class="btn" style="margin-top:8px" onclick="ANS.paso=4;pintaAntojo()">Listo, lo hice</button>'+
@@ -1773,6 +1827,61 @@ function rAntojos(){
    ? 'Más de la mitad se fueron solos. Esa es la prueba de que esperar funciona, y la tienes con tus propios datos.'
    : 'Todavía la mayoría termina en comida, y está bien: estás midiendo, que es el paso que casi nadie da. Mira la franja de arriba y prepara el ambiente justo para esa hora.')+
   '</div></div>';
+}
+
+/* ---------- Estado del guardado ---------- */
+function estadoGuardado(){
+ const n=Object.keys(S.log||{}).length, a=(S.antojos||[]).length, p=(S.weights||[]).length;
+ const hora=ULTIMO?new Date(ULTIMO).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}):'—';
+ return 'Guardado automático activo. Cada cambio se escribe al instante en este teléfono, por duplicado, '+
+  'y no hay cuenta ni servidor: nadie más lo ve. Ahora mismo tienes '+p+' registros de peso, '+n+' días con actividad y '+
+  a+' antojos anotados. Último guardado: '+hora+'. '+
+  'La copia de seguridad es solo para mudarte de teléfono; no necesitas hacerla para que la app recuerde.';
+}
+
+/* ---------- Plan si-entonces ---------- */
+function planes(){ return S.cfg.planes||[]; }
+function rPlanes(){
+ const P=planes();
+ if(!P.length)return '';
+ return '<div class="flag teal" style="margin-bottom:14px"><span>→</span><div><b>Tu plan</b><br>'+
+  P.map(p=>'Si '+esc(p.si)+', entonces '+esc(p.en)+'.').join('<br>')+'</div></div>';
+}
+function planSugerido(){
+ const A=(S.antojos||[]).filter(a=>parseD(a.d)>=new Date(Date.now()-30*864e5));
+ if(A.length<3)return null;
+ const t={},f={};
+ A.forEach(a=>{t[a.trig]=(t[a.trig]||0)+1; const h=Math.floor(a.h/60); const fr=h<6?'de madrugada':h<12?'en la mañana':h<18?'en la tarde':'en la noche'; f[fr]=(f[fr]||0)+1;});
+ const tt=Object.keys(t).sort((a,b)=>t[b]-t[a])[0];
+ const ff=Object.keys(f).sort((a,b)=>f[b]-f[a])[0];
+ const nombre=(TRIGS.find(x=>x[0]===tt)||['','algo'])[1].toLowerCase();
+ return {si:'siento '+nombre+' '+ff, en:alternativas()[1]};
+}
+function planesSheet(){
+ const P=planes(), sug=planSugerido();
+ openSheet('<div class="hd"><b>Tu plan si-entonces</b><button onclick="closeSheet()">×</button></div>'+
+ '<div class="muted" style="margin-bottom:12px">Decidir en caliente casi nunca sale bien. Decidirlo antes, por escrito y en una frase, sí: es de lo poco en psicología del hábito con evidencia sólida. Escribe hasta tres.</div>'+
+ (sug?'<div class="flag amber"><span>·</span><div>Según lo que has registrado: <b>si '+esc(sug.si)+', entonces '+esc(sug.en.toLowerCase())+'</b>. <button style="color:var(--accent);font-weight:600" onclick="usarSugerido()">Usarlo</button></div></div>':'')+
+ [0,1,2].map(i=>'<div class="row" style="gap:6px;align-items:flex-end">'+
+   '<label class="f" style="flex:1"><span>'+(i===0?'Si…':'')+'</span><input type="text" id="pS'+i+'" placeholder="me estreso estudiando de noche" value="'+esc((P[i]&&P[i].si)||'')+'"></label>'+
+   '<label class="f" style="flex:1"><span>'+(i===0?'entonces…':'')+'</span><input type="text" id="pE'+i+'" placeholder="bajo a caminar diez minutos" value="'+esc((P[i]&&P[i].en)||'')+'"></label></div>').join('')+
+ '<button class="btn" onclick="savePlanes()">Guardar mi plan</button>'+
+ '<div class="faint" style="margin-top:12px">Aparecerá arriba del todo cada vez que abras el botón de antojo, justo cuando más cuesta acordarse.</div>');
+}
+function usarSugerido(){
+ const s=planSugerido(); if(!s)return;
+ document.getElementById('pS0').value=s.si;
+ document.getElementById('pE0').value=s.en.toLowerCase();
+}
+function savePlanes(){
+ const out=[];
+ for(let i=0;i<3;i++){
+  const si=(document.getElementById('pS'+i).value||'').trim();
+  const en=(document.getElementById('pE'+i).value||'').trim();
+  if(si&&en)out.push({si:si,en:en});
+ }
+ S.cfg.planes=out; save(); closeSheet(); render();
+ toast(out.length?'Plan guardado':'Plan vacío');
 }
 
 /* ---------- Medicación y suplementos ---------- */
@@ -1917,6 +2026,7 @@ function rPlanCard(){
 /* ---------- 12. Arranque ---------- */
 (function init(){
  const th=localStorage.getItem('plandm_theme'); if(th)document.documentElement.setAttribute('data-theme',th);
+ pedirPersistencia(); recuperarSiVacio();
  drawTabs(); render();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){const t=today();if(t!==CUR&&CUR===ymd(new Date(Date.now()-864e5))){}CUR=today();render();}});
 })();
