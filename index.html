@@ -367,59 +367,59 @@ function figure(key,dur){
 /* ---------- Ejercicios ---------- */
 const EX={
  // Gimnasio del edificio
- prensa:{n:'Prensa de piernas',f:'legpress',pat:'pierna',t:'Pies a la altura de los hombros en medio de la plataforma. Baja hasta 90° sin despegar la cadera del asiento. Nunca estires la rodilla del todo.',s:3,r:'10-12',d:90},
- extq:{n:'Extensión de cuádriceps',f:'legext',pat:'pierna',t:'Rodilla alineada con el eje de la máquina. Sube en 1 segundo, baja en 3. Aprieta arriba sin bloquear.',s:3,r:'12-15',d:60},
+ prensa:{n:'Prensa de piernas',f:'legpress',pat:'pierna',t:'Pies a la altura de los hombros en medio de la plataforma. Baja hasta 90° sin despegar la cadera del asiento. Nunca estires la rodilla del todo.',art:['rodilla'],s:3,r:'10-12',d:90},
+ extq:{n:'Extensión de cuádriceps',f:'legext',pat:'pierna',t:'Rodilla alineada con el eje de la máquina. Sube en 1 segundo, baja en 3. Aprieta arriba sin bloquear.',art:['rodilla'],s:3,r:'12-15',d:60},
  curlfem:{n:'Curl femoral',f:'legcurl',pat:'pierna',t:'Cadera pegada al banco. Lleva el talón al glúteo y baja lento. No arquees la espalda.',s:3,r:'12-15',d:60},
- pecho:{n:'Press de pecho en máquina',f:'press',pat:'empuje',t:'Manijas a la altura del pecho, no del cuello. Codos a 45°, no abiertos a 90°. Empuja sin despegar la espalda.',s:3,r:'10-12',d:90},
+ pecho:{n:'Press de pecho en máquina',f:'press',pat:'empuje',t:'Manijas a la altura del pecho, no del cuello. Codos a 45°, no abiertos a 90°. Empuja sin despegar la espalda.',art:['hombro'],s:3,r:'10-12',d:90},
  jalon:{n:'Jalón al pecho',f:'pulldown',pat:'tiron',t:'Pecho arriba, lleva la barra al esternón, no detrás de la nuca. Piensa en bajar los codos, no en tirar con las manos.',s:3,r:'10-12',d:90},
  remo:{n:'Remo sentado en polea',f:'row',pat:'tiron',t:'Espalda recta, tira hacia el ombligo juntando los omóplatos. No te balancees hacia atrás.',s:3,r:'10-12',d:90},
- hombro:{n:'Press de hombro',f:'ohp',pat:'empuje',t:'Costillas abajo, no arquees la lumbar. Sube hasta estirar sin golpear el bloqueo.',s:3,r:'10-12',d:75},
- lateral:{n:'Elevación lateral',f:'lateral',pat:'empuje',t:'Sube hasta la altura del hombro, no más. Codo ligeramente flexionado, meñique apenas arriba.',s:3,r:'12-15',d:45},
+ hombro:{n:'Press de hombro',f:'ohp',pat:'empuje',t:'Costillas abajo, no arquees la lumbar. Sube hasta estirar sin golpear el bloqueo.',art:['hombro'],s:3,r:'10-12',d:75},
+ lateral:{n:'Elevación lateral',f:'lateral',pat:'empuje',t:'Sube hasta la altura del hombro, no más. Codo ligeramente flexionado, meñique apenas arriba.',art:['hombro'],s:3,r:'12-15',d:45},
  pushdown:{n:'Extensión de tríceps en polea',f:'pushdown',pat:'empuje',t:'Codos pegados al costado, solo se mueve el antebrazo. Estira abajo sin inclinarte.',s:3,r:'12-15',d:45},
  bicep:{n:'Curl de bíceps',f:'curl',pat:'tiron',t:'Codos fijos al costado. Sube controlado, baja en 3 segundos. Sin impulso de cadera.',s:3,r:'10-12',d:45},
- pantorrilla:{n:'Elevación de talones',f:'calf',pat:'pierna',t:'Sube lo más alto posible, pausa 1 segundo arriba, baja lento sintiendo el estiramiento.',s:3,r:'15-20',d:45},
+ pantorrilla:{n:'Elevación de talones',f:'calf',pat:'pierna',t:'Sube lo más alto posible, pausa 1 segundo arriba, baja lento sintiendo el estiramiento.',art:['tobillo'],s:3,r:'15-20',d:45},
  cinta:{n:'Caminadora en pendiente',f:'walk',pat:'cardio',t:'Inclinación 6-10%, velocidad 5-5.5 km/h. Debes poder hablar en frases cortas. Sin agarrarte de las manijas.',s:1,r:'20-25 min',d:0},
  cinta_int:{n:'Intervalos en caminadora',f:'walk',pat:'cardio',t:'1 minuto fuerte (pendiente 10-12% o trote suave) y 2 minutos de caminata fácil. Repite 8 veces. El minuto fuerte debe costarte hablar.',s:1,r:'8 rondas · 24 min',d:0},
  bicicleta:{n:'Bicicleta estática',f:'bike',pat:'cardio',t:'Sillín a la altura de la cadera. Resistencia media, 70-85 rpm, respiración controlada todo el tiempo.',s:1,r:'20-25 min',d:0},
  bici_int:{n:'Intervalos en bicicleta',f:'bike',pat:'cardio',t:'30 segundos a resistencia alta y 90 de pedaleo suave. Repite 10 veces. Es la forma más amable con tus rodillas de subir resistencia.',s:1,r:'10 rondas · 20 min',d:0},
 
  // Casa: fuerza con peso corporal
- sentadilla:{n:'Sentadilla con peso corporal',f:'squat',pat:'pierna',t:'Pies al ancho de hombros, punta ligeramente afuera. Baja llevando la cadera atrás, rodillas hacia afuera, pecho arriba.',bw:1,s:3,r:'12-15',d:60},
- sentsilla:{n:'Sentadilla a la silla',f:'squat',pat:'pierna',t:'Baja hasta rozar la silla sin sentarte del todo, 3 segundos de bajada. Si cuesta, siéntate y levántate sin manos.',bw:1,s:3,r:'10-12',d:60},
- wallsit:{n:'Sentadilla isométrica en pared',f:'wallsit',pat:'pierna',t:'Espalda plana contra la pared, rodillas a 90°, peso en los talones. Aguanta respirando normal. Es la que más resistencia muscular construye sin equipo.',bw:1,u:'seg',s:3,r:'30-45 seg',d:60},
- zancada:{n:'Zancada alterna',f:'lunge',pat:'pierna',t:'Paso largo, rodilla de atrás casi al piso, torso vertical. La rodilla de adelante no pasa la punta del pie.',bw:1,s:3,r:'10 por pierna',d:60},
+ sentadilla:{n:'Sentadilla con peso corporal',f:'squat',pat:'pierna',t:'Pies al ancho de hombros, punta ligeramente afuera. Baja llevando la cadera atrás, rodillas hacia afuera, pecho arriba.',bw:1,art:['rodilla'],s:3,r:'12-15',d:60},
+ sentsilla:{n:'Sentadilla a la silla',f:'squat',pat:'pierna',t:'Baja hasta rozar la silla sin sentarte del todo, 3 segundos de bajada. Si cuesta, siéntate y levántate sin manos.',bw:1,art:['rodilla'],s:3,r:'10-12',d:60},
+ wallsit:{n:'Sentadilla isométrica en pared',f:'wallsit',pat:'pierna',t:'Espalda plana contra la pared, rodillas a 90°, peso en los talones. Aguanta respirando normal. Es la que más resistencia muscular construye sin equipo.',bw:1,u:'seg',art:['rodilla'],s:3,r:'30-45 seg',d:60},
+ zancada:{n:'Zancada alterna',f:'lunge',pat:'pierna',t:'Paso largo, rodilla de atrás casi al piso, torso vertical. La rodilla de adelante no pasa la punta del pie.',bw:1,art:['rodilla','cadera'],s:3,r:'10 por pierna',d:60},
  puente:{n:'Puente de glúteo',f:'bridge',pat:'pierna',t:'Talones cerca del glúteo. Empuja con los talones, aprieta el glúteo arriba 2 segundos. No arquees la lumbar.',bw:1,s:3,r:'15',d:45},
  puente1:{n:'Puente a una pierna',f:'bridge',pat:'pierna',t:'Una pierna estirada al aire, empuja con el talón de la que queda apoyada. La cadera no se inclina hacia un lado.',bw:1,s:3,r:'10 por lado',d:50},
- flexion:{n:'Flexión (pared, rodillas o piso)',f:'pushup',pat:'empuje',t:'Empieza en pared. Cuando hagas 15 limpias, pasa a rodillas, luego al piso. Cuerpo en línea recta, codos a 45°.',bw:1,s:3,r:'8-12',d:75},
- flexion_inc:{n:'Flexión inclinada en el sofá',f:'pushup',pat:'empuje',t:'Manos en el borde del sofá o la mesa, cuerpo recto. Mientras más alto el apoyo, más fácil. Baja en 2 segundos.',bw:1,s:3,r:'10-14',d:60},
- donkey:{n:'Patada de glúteo',f:'donkey',pat:'pierna',t:'En cuatro apoyos, lleva el talón al techo sin arquear la lumbar. El movimiento sale del glúteo, no de la espalda.',bw:1,s:3,r:'12 por lado',d:45},
- pantorrilla_c:{n:'Elevación de talones de pie',f:'calf',pat:'pierna',t:'Apóyate en la pared, sube lo más alto posible y baja en 3 segundos. Hazlo descalzo.',bw:1,s:3,r:'20',d:40},
+ flexion:{n:'Flexión (pared, rodillas o piso)',f:'pushup',pat:'empuje',t:'Empieza en pared. Cuando hagas 15 limpias, pasa a rodillas, luego al piso. Cuerpo en línea recta, codos a 45°.',bw:1,art:['hombro','muneca'],s:3,r:'8-12',d:75},
+ flexion_inc:{n:'Flexión inclinada en el sofá',f:'pushup',pat:'empuje',t:'Manos en el borde del sofá o la mesa, cuerpo recto. Mientras más alto el apoyo, más fácil. Baja en 2 segundos.',bw:1,art:['hombro','muneca'],s:3,r:'10-14',d:60},
+ donkey:{n:'Patada de glúteo',f:'donkey',pat:'pierna',t:'En cuatro apoyos, lleva el talón al techo sin arquear la lumbar. El movimiento sale del glúteo, no de la espalda.',bw:1,art:['muneca'],s:3,r:'12 por lado',d:45},
+ pantorrilla_c:{n:'Elevación de talones de pie',f:'calf',pat:'pierna',t:'Apóyate en la pared, sube lo más alto posible y baja en 3 segundos. Hazlo descalzo.',bw:1,art:['tobillo'],s:3,r:'20',d:40},
 
  // Casa: acondicionamiento funcional
  marcha:{n:'Rodillas altas en el sitio',f:'highknee',pat:'cond',t:'Marcha enérgica llevando la rodilla a la altura de la cadera. Si quieres más intensidad, acelera; si quieres cuidar rodillas, mantén un pie siempre en el piso.',s:1,r:'40 seg',d:20},
- skater:{n:'Patinador lateral',f:'skater',pat:'cond',t:'Salto o paso amplio de lado a lado, aterrizando con la rodilla suave. Sin salto sigue sirviendo: lo que importa es el desplazamiento lateral.',s:1,r:'40 seg',d:20},
- escalador:{n:'Escaladores',f:'climber',pat:'cond',t:'Cadera baja, no la subas. Lleva la rodilla al pecho alternando. Si es mucho, hazlo lento tipo marcha en plancha.',s:1,r:'30-40 seg',d:20},
- jumping:{n:'Jumping jacks o paso lateral',f:'jack',pat:'cond',t:'Si el impacto te molesta las rodillas, haz la versión sin salto: paso lateral abriendo los brazos arriba.',s:1,r:'40 seg',d:20},
- burpee:{n:'Burpee escalado',f:'burpee',pat:'cond',t:'Sin salto y sin flexión: manos al piso, caminas los pies atrás a plancha, los traes de vuelta y te paras. Cuando lo domines, añade la flexión.',s:1,r:'30 seg',d:30},
- bear:{n:'Oso isométrico',f:'bear',pat:'cond',t:'Cuatro apoyos con las rodillas a un palmo del piso. Espalda plana, respira. Si puedes, camina adelante y atrás dos pasos.',u:'seg',s:1,r:'25-30 seg',d:25},
- box:{n:'Boxeo de sombra',f:'box',pat:'cond',t:'Guardia arriba, golpes rectos alternando, piernas en movimiento constante. Rota el torso, no solo el brazo. Cero impacto para rodillas.',s:1,r:'45 seg',d:20},
- sentadilla_r:{n:'Sentadillas a ritmo',f:'squat',pat:'cond',t:'Sentadilla completa a buen ritmo pero sin perder la forma. En cuanto las rodillas se metan hacia adentro, bajas la velocidad.',s:1,r:'40 seg',d:20},
- zancada_r:{n:'Zancadas alternas a ritmo',f:'lunge',pat:'cond',t:'Alterna piernas sin pausa. Si pierdes el equilibrio, apóyate con una mano en la pared y sigue.',s:1,r:'40 seg',d:20},
+ skater:{n:'Patinador lateral',f:'skater',pat:'cond',t:'Salto o paso amplio de lado a lado, aterrizando con la rodilla suave. Sin salto sigue sirviendo: lo que importa es el desplazamiento lateral.',art:['rodilla','tobillo','cadera'],s:1,r:'40 seg',d:20},
+ escalador:{n:'Escaladores',f:'climber',pat:'cond',t:'Cadera baja, no la subas. Lleva la rodilla al pecho alternando. Si es mucho, hazlo lento tipo marcha en plancha.',art:['muneca','hombro'],s:1,r:'30-40 seg',d:20},
+ jumping:{n:'Jumping jacks o paso lateral',f:'jack',pat:'cond',t:'Si el impacto te molesta las rodillas, haz la versión sin salto: paso lateral abriendo los brazos arriba.',art:['rodilla','tobillo'],s:1,r:'40 seg',d:20},
+ burpee:{n:'Burpee escalado',f:'burpee',pat:'cond',t:'Sin salto y sin flexión: manos al piso, caminas los pies atrás a plancha, los traes de vuelta y te paras. Cuando lo domines, añade la flexión.',art:['rodilla','muneca','hombro','tobillo'],s:1,r:'30 seg',d:30},
+ bear:{n:'Oso isométrico',f:'bear',pat:'cond',t:'Cuatro apoyos con las rodillas a un palmo del piso. Espalda plana, respira. Si puedes, camina adelante y atrás dos pasos.',u:'seg',art:['muneca','hombro'],s:1,r:'25-30 seg',d:25},
+ box:{n:'Boxeo de sombra',f:'box',pat:'cond',t:'Guardia arriba, golpes rectos alternando, piernas en movimiento constante. Rota el torso, no solo el brazo. Cero impacto para rodillas.',art:['hombro'],s:1,r:'45 seg',d:20},
+ sentadilla_r:{n:'Sentadillas a ritmo',f:'squat',pat:'cond',t:'Sentadilla completa a buen ritmo pero sin perder la forma. En cuanto las rodillas se metan hacia adentro, bajas la velocidad.',art:['rodilla'],s:1,r:'40 seg',d:20},
+ zancada_r:{n:'Zancadas alternas a ritmo',f:'lunge',pat:'cond',t:'Alterna piernas sin pausa. Si pierdes el equilibrio, apóyate con una mano en la pared y sigue.',art:['rodilla','cadera'],s:1,r:'40 seg',d:20},
 
  // Core y pilates
  plancha:{n:'Plancha',f:'plank',pat:'core',t:'Codos bajo los hombros, glúteo apretado, costillas abajo. Si la lumbar se hunde, para: la calidad manda sobre el tiempo.',bw:1,u:'seg',s:3,r:'20-40 seg',d:45},
- toque_hombro:{n:'Plancha con toque de hombro',f:'plank',pat:'core',t:'En plancha alta, toca el hombro contrario sin que la cadera se balancee. Separa más los pies si te tambaleas.',bw:1,s:3,r:'10 por lado',d:45},
+ toque_hombro:{n:'Plancha con toque de hombro',f:'plank',pat:'core',t:'En plancha alta, toca el hombro contrario sin que la cadera se balancee. Separa más los pies si te tambaleas.',bw:1,art:['hombro','muneca'],s:3,r:'10 por lado',d:45},
  planchalat:{n:'Plancha lateral',f:'sideplank',pat:'core',t:'Codo bajo el hombro, cadera alta en línea recta. Rodillas apoyadas si pesa mucho.',bw:1,u:'seg',s:2,r:'20 seg por lado',d:40},
  hollow:{n:'Hollow hold',f:'hollow',pat:'core',t:'Lumbar pegada al piso, brazos y piernas estirados y despegados unos centímetros. Si la espalda se arquea, dobla las rodillas.',bw:1,u:'seg',s:3,r:'20-30 seg',d:45},
  deadbug:{n:'Dead bug',f:'deadbug',pat:'core',t:'Lumbar pegada al piso todo el tiempo. Baja brazo y pierna contrarios lento, exhalando.',bw:1,s:3,r:'8 por lado',d:45},
- birddog:{n:'Bird dog',f:'birddog',pat:'core',t:'Cuatro apoyos, espalda neutra. Estira brazo y pierna opuestos sin rotar la cadera. Pausa 2 segundos.',bw:1,s:3,r:'8 por lado',d:45},
- crunch:{n:'Crunch controlado',f:'crunch',pat:'core',t:'Sube solo los omóplatos, barbilla sin pegarse al pecho. Exhala al subir, baja en 3 segundos.',bw:1,s:3,r:'12-15',d:40},
- bici_ab:{n:'Bicicleta abdominal',f:'bicycle',pat:'core',t:'Lento y controlado, no por velocidad. Lumbar pegada al piso, codo hacia la rodilla contraria.',bw:1,s:3,r:'10 por lado',d:45},
- superman:{n:'Superman',f:'superman',pat:'core',t:'Levanta pecho y piernas unos centímetros, mirada al piso. Pausa 2 segundos arriba.',bw:1,s:3,r:'10',d:40},
+ birddog:{n:'Bird dog',f:'birddog',pat:'core',t:'Cuatro apoyos, espalda neutra. Estira brazo y pierna opuestos sin rotar la cadera. Pausa 2 segundos.',bw:1,art:['muneca'],s:3,r:'8 por lado',d:45},
+ crunch:{n:'Crunch controlado',f:'crunch',pat:'core',t:'Sube solo los omóplatos, barbilla sin pegarse al pecho. Exhala al subir, baja en 3 segundos.',bw:1,art:['lumbar'],s:3,r:'12-15',d:40},
+ bici_ab:{n:'Bicicleta abdominal',f:'bicycle',pat:'core',t:'Lento y controlado, no por velocidad. Lumbar pegada al piso, codo hacia la rodilla contraria.',bw:1,art:['lumbar'],s:3,r:'10 por lado',d:45},
+ superman:{n:'Superman',f:'superman',pat:'core',t:'Levanta pecho y piernas unos centímetros, mirada al piso. Pausa 2 segundos arriba.',bw:1,art:['lumbar'],s:3,r:'10',d:40},
  hundred:{n:'The Hundred (pilates)',f:'hundred',pat:'pilates',t:'Piernas a 45° o rodillas dobladas si cuesta. Brazos bombean a los costados. Inhala 5 tiempos, exhala 5.',bw:1,s:1,r:'100 bombeos',d:45},
- rollup:{n:'Roll up (pilates)',f:'rollup',pat:'pilates',t:'Despega la columna vértebra por vértebra, no de golpe. Si no puedes subir, dobla rodillas.',bw:1,s:2,r:'8',d:45},
+ rollup:{n:'Roll up (pilates)',f:'rollup',pat:'pilates',t:'Despega la columna vértebra por vértebra, no de golpe. Si no puedes subir, dobla rodillas.',bw:1,art:['lumbar'],s:2,r:'8',d:45},
  clam:{n:'Elevación lateral de pierna',f:'clam',pat:'pilates',t:'Acostado de lado, cuerpo en línea. Sube la pierna sin rotar la cadera hacia atrás.',bw:1,s:2,r:'12 por lado',d:40},
- catcow:{n:'Gato-camello',f:'catcow',pat:'movilidad',t:'Alterna redondear y arquear la espalda al ritmo de la respiración. Movimiento lento, sin forzar.',s:1,r:'10 ciclos',d:0},
+ catcow:{n:'Gato-camello',f:'catcow',pat:'movilidad',t:'Alterna redondear y arquear la espalda al ritmo de la respiración. Movimiento lento, sin forzar.',art:['muneca'],s:1,r:'10 ciclos',d:0},
  movilidad:{n:'Movilidad de cadera y espalda',f:'stretch',pat:'movilidad',t:'Cada posición 30 segundos sin rebotes. Respira profundo, no busques dolor.',s:1,r:'6-8 min',d:0},
  caminata:{n:'Caminata continua',f:'walk',pat:'cardio',t:'Ritmo al que puedas hablar pero no cantar. Postura erguida, braceo activo. Sirve el pasillo, la caminadora o la calle.',s:1,r:'30-40 min',d:0},
  marcha_z2:{n:'Marcha continua en la sala',f:'highknee',pat:'cardio',t:'Marcha sostenida con braceo, rodilla a media altura, 25 minutos sin parar. Pon música o un podcast: la clave es no detenerte.',s:1,r:'25 min',d:0}
@@ -491,7 +491,36 @@ const ALT={g_inf:'c_fue',g_emp:'c_fue2',g_tir:'c_pil',g_full:'c_fue',g_int:'c_in
            c_ini:'g_full',c_pil:'g_full',c_core:'g_full',c_mov:'g_z2',c_cam:'g_z2',c_exp:'c_exp',rec:'rec'};
 
 /* ---------- Plan por objetivos ---------- */
-const OBJ=[['grasa','Perder grasa'],['resistencia','Ganar resistencia'],['fuerza','Ganar fuerza'],['movilidad','Moverme sin dolor']];
+const OBJ=[['grasa','Perder grasa'],['medidas','Reducir medidas'],['resistencia','Ganar resistencia'],['fuerza','Ganar fuerza'],['movilidad','Moverme sin dolor']];
+/* ---------- Dolor articular y ajuste de sesión ---------- */
+const DOLORES=[['rodilla','Rodillas'],['hombro','Hombros'],['lumbar','Espalda baja'],
+               ['muneca','Muñecas'],['cadera','Cadera'],['tobillo','Tobillos']];
+function exOk(id){
+ const e=EX[id]; if(!e||!e.art)return true;
+ const d=S.cfg.dolores||[]; if(!d.length)return true;
+ return !e.art.some(x=>d.indexOf(x)>=0);
+}
+function sesionAjustada(key){
+ const s=SESS[key]; if(!s)return null;
+ let ex=s.ex.filter(exOk);
+ if(ex.length<3) ex=s.ex.filter(id=>EX[id]&&EX[id].pat==='movilidad').concat(['puente','deadbug','caminata']).filter(id=>EX[id]);
+ const min=S.cfg.minutos||45;
+ const out=Object.assign({},s);
+ if(s.tipo==='circuito'){
+  out.rondas=Math.max(2,Math.min(8,Math.round(s.rondas*min/(s.dur||min))));
+ }else{
+  const cap=Math.max(3,Math.round(min/6));
+  if(ex.length>cap){
+   const ult=ex[ex.length-1];
+   const cierra=EX[ult]&&EX[ult].pat==='movilidad';
+   ex=cierra?ex.slice(0,cap-1).concat([ult]):ex.slice(0,cap);
+  }
+ }
+ out.ex=ex; out.dur=min;
+ out.recortada=(ex.length<s.ex.length)||(s.tipo==='circuito'&&out.rondas!==s.rondas);
+ out.quitados=s.ex.length-ex.length;
+ return out;
+}
 const DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 function planWeek(){
  const c=S.cfg, o=c.objetivos||['grasa'], gym=c.gym!==false, dias=c.dias||6;
@@ -668,6 +697,7 @@ function freshState(){
        kcal:2000,prot:140,carb:200,gras:65,agua:3000,fibra:35,nivelProt:'equilibrado',
        dias:6,gym:true,onboard:false,ritmo:'moderado',objetivos:['grasa','resistencia'],impacto:'bajo',
        meds:[],
+       minutos:45,dolores:[],equipo:'ambos',
        ayuno:{activo:false,preset:'16:8',inicio:'12:00',fin:'20:00'},
        alternativas:[],planes:[],
        nota:''},
@@ -1130,7 +1160,7 @@ function handSheetWithPhoto(){
 let ETAB='hoy';
 function rEntreno(){
  if(ETAB==='lib')return rBiblioteca();
- const sf=sessionFor(CUR), ses=SESS[sf.key], l=day(CUR);
+ const sf=sessionFor(CUR), ses=sesionAjustada(sf.key), l=day(CUR);
  if(!l.wo||l.wo.sid!==sf.key) l.wo={sid:sf.key,sets:{},ini:null,fin:null,rondas:0};
  const en_gym=ses.loc==='gym', circ=ses.tipo==='circuito';
  let h='<header class="top"><div><h1>Entreno</h1><div class="sub">'+sf.dia+(sf.swapped?' · rutina elegida por ti':' · según tu plan')+'</div></div></header>';
@@ -1139,6 +1169,7 @@ function rEntreno(){
  h+='<div class="card"><h2 style="font-size:19px;margin-bottom:6px">'+esc(ses.t)+'</h2>'+
   '<div class="faint">'+ses.dur+' min · '+ses.eq+' · '+ses.nivel+'</div>'+
   '<div class="muted" style="margin-top:7px">'+esc(ses.foco)+'</div>'+
+  (ses.recortada?'<div class="faint" style="margin-top:7px">Ajustada a tus '+S.cfg.minutos+' minutos'+((S.cfg.dolores||[]).length?' y a las articulaciones que marcaste':'')+'.</div>':'')+
   (l.wo.fin?'':'<div class="row" style="margin-top:12px">'+
    '<button class="btn ghost sm" style="flex:1" onclick="swapSession()">'+(en_gym?'No puedo bajar al gym':'Hoy sí voy al gym')+'</button>'+
    '<button class="btn ghost sm" style="flex:1" onclick="ETAB=\'lib\';rEntreno();window.scrollTo(0,0)">Elegir otra</button></div>')+'</div>';
@@ -1220,7 +1251,7 @@ function addRound(){const l=day(CUR);l.wo.rondas=(l.wo.rondas||0)+1;save();rEntr
 /* ---- circuito por intervalos ---- */
 let CIRC=null;
 function startCircuit(key){
- const s=SESS[key], l=day(CUR);
+ const s=sesionAjustada(key), l=day(CUR);
  const seq=[{t:'prep',s:10,n:'Prepárate',ex:s.ex[0]}];
  const desde=l.wo.rondas||0;
  for(let r=desde;r<s.rondas;r++){
@@ -1244,7 +1275,7 @@ function startCircuit(key){
  CIRC.t=setInterval(()=>{ if(CIRC&&!CIRC.pause){CIRC.left--; tickCircuit();} },1000);
 }
 function paintCircuit(){
- const st=CIRC.seq[CIRC.i], s=SESS[CIRC.key], e=EX[st.ex];
+ const st=CIRC.seq[CIRC.i], s=sesionAjustada(CIRC.key), e=EX[st.ex];
  document.getElementById('cFigBox').innerHTML=figure(e.f,st.t==='work'?2.0:3.2);
  document.getElementById('cPhase').textContent=st.t==='work'?'Trabaja':(st.t==='rest'?'Descansa, viene:':(st.t==='pausa'?'Pausa larga, viene:':'Empieza con:'));
  document.getElementById('cName').textContent=st.t==='work'?e.n:e.n;
@@ -1275,7 +1306,7 @@ function stopCircuit(){
  CIRC=null;closeSheet();rEntreno();
 }
 function finishCircuit(){
- const s=SESS[CIRC.key], l=day(CUR);
+ const s=sesionAjustada(CIRC.key), l=day(CUR);
  clearInterval(CIRC.t); l.wo.rondas=s.rondas; CIRC=null;
  s.ex.forEach(id=>{ if(l.wo.sets[id]) l.wo.sets[id][0].d=true; });
  save(); closeSheet(); finish();
@@ -1294,11 +1325,11 @@ function swapSession(){
  l.wo=null; save(); rEntreno(); toast('Sesión cambiada');
 }
 function finish(){
- const l=day(CUR), s=SESS[l.wo.sid];
+ const l=day(CUR), s=sesionAjustada(l.wo.sid);
  l.wo.fin=Date.now(); l.blocks.entreno=true;
  l.wo.min=s&&s.tipo==='circuito'
    ? Math.round((l.wo.rondas||0)*s.ex.length*(s.trabajo+s.descanso)/60)
-   : 45;
+   : (S.cfg.minutos||45);
  l.wo.cond=!!(s&&(s.tipo==='circuito'||s.loc==='gym'&&s.t.indexOf('Interval')>=0));
  save(); rEntreno(); toast('Sesión completada. Racha: '+streak()+' días');
 }
@@ -1426,7 +1457,10 @@ function rAjustes(){
  h+='<div class="card"><h2>Lo que buscas</h2><div class="chips">'+
   OBJ.map(o=>'<button class="chip'+((c.objetivos||[]).includes(o[0])?' on':'')+'" onclick="cfgObj(\''+o[0]+'\')">'+o[1]+'</button>').join('')+'</div>'+
   '<div class="faint" style="margin-top:9px">Cambia esto y la semana se rearma sola. Ahora mismo entrenas '+c.dias+' días '+(c.gym!==false?'con gimnasio':'solo en casa')+'.</div>'+
-  '<button class="btn ghost sm" style="width:100%;margin-top:12px" onclick="S.cfg.onboard=false;save();render()">Volver a configurar todo</button></div>';
+  '<div class="faint" style="margin-top:9px">Entrenas '+c.dias+' días de '+(c.minutos||45)+' minutos, '+(c.dias*(c.minutos||45))+' a la semana.'+
+   ((c.dolores||[]).length?' Evitando carga en '+c.dolores.map(d=>(DOLORES.find(x=>x[0]===d)||['',''])[1].toLowerCase()).join(' y ')+'.':' Sin molestias articulares marcadas.')+'</div>'+
+  '<div class="row" style="margin-top:12px"><button class="btn ghost sm" onclick="diagnosticoSheet()">Ver mi diagnóstico</button>'+
+  '<button class="btn ghost sm" onclick="S.cfg.onboard=false;OB=null;save();render()">Rehacerlo</button></div></div>';
  h+=rPlanCard();
 
  h+='<div class="card"><h2>Antojos y ansiedad</h2><div class="muted" style="margin-bottom:10px">El botón morado de la pantalla de Hoy abre una pausa de diez minutos, te ayuda a distinguir hambre de ansiedad y guarda cómo terminó. Nunca te va a decir que no comas.</div>'+
@@ -1949,33 +1983,67 @@ function saveTest(id){
 let OB=null;
 function rOnboard(){
  const c=S.cfg;
- if(!OB)OB={obj:(c.objetivos||['grasa']).slice(),dias:c.dias,gym:c.gym!==false,impacto:c.impacto||'bajo'};
- let h='<header class="top"><div><h1>Antes de empezar</h1><div class="sub">Seis respuestas y la app arma tu plan</div></div></header>';
+ if(!OB)OB={obj:(c.objetivos||['grasa']).slice(),dias:c.dias||6,min:c.minutos||45,
+            equipo:c.equipo||(c.gym!==false?'ambos':'casa'),dolores:(c.dolores||[]).slice(),
+            sinDolor:!(c.dolores&&c.dolores.length)};
+ let h='<header class="top"><div><h1>Diagnóstico</h1><div class="sub">Seis respuestas y la app arma tu plan</div></div></header>';
  h+='<button class="btn ghost" style="margin-bottom:14px" onclick="restoreSheet()">Ya tengo un respaldo: pegarlo y seguir</button>';
  if(!storageVivo())h+='<div class="flag"><span>!</span><div>Este navegador no está guardando datos entre visitas. Exporta tu respaldo al terminar cada sesión, o aloja la app por tu cuenta para que guarde sola.</div></div>';
- h+='<div class="card"><h2>¿Qué quieres lograr? Puedes elegir varios</h2><div class="chips">'+
+
+ h+='<div class="card"><h2>1. ¿Qué quieres lograr?</h2><div class="chips">'+
   OBJ.map(o=>'<button class="chip'+(OB.obj.includes(o[0])?' on':'')+'" onclick="obTog(\''+o[0]+'\')">'+o[1]+'</button>').join('')+'</div>'+
   '<div class="faint" style="margin-top:9px">'+objHint()+'</div></div>';
- h+='<div class="card"><h2>¿Cuántos días por semana vas a entrenar?</h2><div class="chips">'+
-  [3,4,5,6,7].map(d=>'<button class="chip'+(OB.dias===d?' on':'')+'" onclick="OB.dias='+d+';rOnboard()">'+d+' días</button>').join('')+'</div>'+
-  '<div class="faint" style="margin-top:9px">Elige el número que vas a cumplir en tu peor semana, no en la mejor.</div></div>';
- h+='<div class="card"><h2>¿Tienes gimnasio a mano?</h2><div class="chips">'+
-  [[true,'Sí, el de mi edificio'],[false,'No, solo mi sala']].map(x=>'<button class="chip'+(OB.gym===x[0]?' on':'')+'" onclick="OB.gym='+x[0]+';rOnboard()">'+x[1]+'</button>').join('')+'</div>'+
-  '<div class="faint" style="margin-top:9px">Aunque digas que sí, cada día de gimnasio trae su versión equivalente en casa a un toque de distancia.</div></div>';
- h+='<div class="card"><h2>¿Cómo andan tus rodillas y tobillos?</h2><div class="chips">'+
-  [['bajo','Mejor sin saltos'],['normal','Aguantan saltos']].map(x=>'<button class="chip'+(OB.impacto===x[0]?' on':'')+'" onclick="OB.impacto=\''+x[0]+'\';rOnboard()">'+x[1]+'</button>').join('')+'</div>'+
-  '<div class="faint" style="margin-top:9px">Si llevas tiempo sin entrenar o cargas peso de más, la opción sin saltos es la sensata los primeros dos meses. Todos los ejercicios tienen versión sin impacto.</div></div>';
- h+='<div class="card"><h2>Tus números</h2>'+
+
+ const tot=OB.dias*OB.min;
+ h+='<div class="card"><h2>2. ¿Cuánto tiempo a la semana?</h2>'+
+  '<div class="faint" style="margin-bottom:7px">Días por semana</div><div class="chips">'+
+  [3,4,5,6,7].map(d=>'<button class="chip'+(OB.dias===d?' on':'')+'" onclick="OB.dias='+d+';rOnboard()">'+d+'</button>').join('')+'</div>'+
+  '<div class="faint" style="margin:14px 0 7px">Minutos por sesión</div><div class="chips">'+
+  [20,30,45,60].map(m=>'<button class="chip'+(OB.min===m?' on':'')+'" onclick="OB.min='+m+';rOnboard()">'+m+' min</button>').join('')+'</div>'+
+  '<div class="card tight" style="margin-top:14px;background:var(--surface-2)"><div style="display:flex;justify-content:space-between;align-items:baseline">'+
+   '<b class="num" style="font-size:28px">'+tot+'</b><span class="muted">minutos a la semana</span></div>'+
+   '<div class="faint" style="margin-top:5px">'+
+   (tot>=150?'Por encima de los 150 minutos semanales, que es el umbral donde la resistencia y los triglicéridos empiezan a moverse de verdad.'
+            :'Por debajo de 150 minutos semanales. Funciona, pero el cambio será más lento. Si puedes, sube un día o quince minutos.')+
+   '</div></div>'+
+  '<div class="faint" style="margin-top:10px">Elige el número que vas a cumplir en tu peor semana, no en la mejor. Las rutinas se recortan solas para caber en los minutos que elijas.</div></div>';
+
+ h+='<div class="card"><h2>3. ¿Qué equipo tienes a mano?</h2><div class="chips">'+
+  [['ambos','Gimnasio del edificio y mi sala'],['gym','Solo el gimnasio'],['casa','Solo mi sala, sin equipo']]
+   .map(x=>'<button class="chip'+(OB.equipo===x[0]?' on':'')+'" onclick="OB.equipo=\''+x[0]+'\';rOnboard()">'+x[1]+'</button>').join('')+'</div>'+
+  '<div class="faint" style="margin-top:9px">'+
+  (OB.equipo==='casa'?'Todo con peso corporal: nada que comprar, nada que cargar.'
+   :'Máquinas de fuerza, poleas, prensa, bicicletas y caminadoras. '+(OB.equipo==='ambos'?'Cada día de gimnasio trae su versión equivalente en casa a un toque de distancia.':''))+
+  '</div></div>';
+
+ h+='<div class="card"><h2>4. ¿Te duele alguna articulación?</h2><div class="chips">'+
+  '<button class="chip'+(OB.sinDolor?' on':'')+'" onclick="OB.sinDolor=true;OB.dolores=[];rOnboard()">No, ninguna</button>'+
+  '<button class="chip'+(!OB.sinDolor?' on':'')+'" onclick="OB.sinDolor=false;rOnboard()">Sí, alguna</button></div>';
+ if(!OB.sinDolor){
+  h+='<div class="faint" style="margin:14px 0 7px">¿Cuáles? Marca las que te molesten al moverte</div><div class="chips">'+
+   DOLORES.map(d=>'<button class="chip'+(OB.dolores.includes(d[0])?' on':'')+'" onclick="dolTog(\''+d[0]+'\')">'+d[1]+'</button>').join('')+'</div>'+
+   '<div class="faint" style="margin-top:10px">Los ejercicios que cargan esas articulaciones salen de tus rutinas y entran otros que trabajan lo mismo sin molestarlas. Si el dolor es fuerte, constante o viene de una lesión, eso lo ve un fisioterapeuta, no una app.</div>';
+ }else{
+  h+='<div class="faint" style="margin-top:9px">Perfecto, entonces saltamos esa parte. Puedes activarla después en Ajustes el día que algo te moleste.</div>';
+ }
+ h+='</div>';
+
+ h+='<div class="card"><h2>5. Tus números</h2>'+
   '<div class="row"><label class="f"><span>Edad</span><input type="number" id="oE" value="'+c.edad+'"></label>'+
   '<label class="f"><span>Estatura (cm)</span><input type="number" id="oH" value="'+c.altura+'"></label></div>'+
   '<div class="row"><label class="f"><span>Peso hoy (kg)</span><input type="number" step="0.1" id="oW" value="'+lastWeight()+'"></label>'+
   '<label class="f"><span>Peso objetivo (kg)</span><input type="number" step="0.1" id="oO" value="'+c.objetivo+'"></label></div>'+
+  '<label class="f"><span>Cintura en cm (opcional, a la altura del ombligo)</span><input type="number" step="0.5" id="oC" value="'+((lastWith('c')||{}).c||'')+'"></label>'+
   '<label class="f"><span>Ritmo de pérdida</span><select id="oR">'+
    [['suave','Suave: 0.4 kg por semana'],['moderado','Moderado: 0.6 kg por semana'],['firme','Firme: 0.8 kg por semana']]
-   .map(x=>'<option value="'+x[0]+'"'+(c.ritmo===x[0]?' selected':'')+'>'+x[1]+'</option>').join('')+'</select></label></div>';
- h+='<div class="card"><h2>¿Tomas algo a diario?</h2>'+
-  '<label class="f"><span>Medicamentos y suplementos, uno por línea</span><textarea id="oM" style="min-height:110px">'+esc((c.meds||[]).join('\n'))+'</textarea></label>'+
-  '<div class="faint">Aparecen cada día como un bloque para marcar. La app no sabe de dosis ni las cambia: solo te recuerda.</div></div>';
+   .map(x=>'<option value="'+x[0]+'"'+(c.ritmo===x[0]?' selected':'')+'>'+x[1]+'</option>').join('')+'</select></label>'+
+  '<label class="f"><span>Nivel de proteína que puedes sostener</span><select id="oN">'+
+   NIVELES.map(x=>'<option value="'+x[0]+'"'+(c.nivelProt===x[0]?' selected':'')+'>'+x[2]+'</option>').join('')+'</select></label></div>';
+
+ h+='<div class="card"><h2>6. ¿Qué tomas a diario?</h2>'+
+  '<label class="f"><span>Medicamentos y suplementos, uno por línea</span><textarea id="oM" style="min-height:110px" placeholder="Uno por línea">'+esc((c.meds||[]).join('\n'))+'</textarea></label>'+
+  '<div class="faint">Aparecen cada día como un bloque para marcar. La app no sabe de dosis ni las cambia: solo te recuerda, y te avisa de lo que conviene hablar con tu médico.</div></div>';
+
  h+='<button class="btn" onclick="finishOnboard()">Crear mi plan</button>';
  h+='<div class="faint" style="margin-top:12px;text-align:center">Puedes cambiar todo esto después en Ajustes.</div>';
  document.getElementById('scr-hoy').innerHTML=h;
@@ -1985,6 +2053,7 @@ function objHint(){
  if(o.includes('resistencia')&&o.includes('fuerza'))return 'Fuerza y resistencia a la vez: tres días de fuerza y dos de acondicionamiento, separados para que no se estorben.';
  if(o.includes('resistencia'))return 'Con resistencia dentro, el plan mete circuitos por intervalos y sesiones continuas, no solo caminata.';
  if(o.includes('fuerza'))return 'Prioridad a la carga progresiva: menos circuitos, más series pesadas y descansos largos.';
+ if(o.includes('medidas'))return 'Reducir medidas se mide con la cintura, no con la báscula: es el número que baja primero y el que más dice sobre tu salud.';
  if(o.includes('movilidad'))return 'Se añade un día de pilates y movilidad al final de la semana.';
  return 'Solo perder grasa: fuerza para no perder músculo y cardio suave para sumar gasto.';
 }
@@ -1993,25 +2062,67 @@ function obTog(k){
  if(i>=0){ if(OB.obj.length>1)OB.obj.splice(i,1); } else OB.obj.push(k);
  rOnboard();
 }
+function dolTog(k){
+ const i=OB.dolores.indexOf(k);
+ if(i>=0)OB.dolores.splice(i,1); else OB.dolores.push(k);
+ OB.sinDolor=!OB.dolores.length?OB.sinDolor:false;
+ rOnboard();
+}
 function finishOnboard(){
  const c=S.cfg;
- c.objetivos=OB.obj.slice(); c.dias=OB.dias; c.gym=OB.gym; c.impacto=OB.impacto;
+ c.objetivos=OB.obj.slice(); c.dias=OB.dias; c.minutos=OB.min;
+ c.equipo=OB.equipo; c.gym=(OB.equipo!=='casa');
+ c.dolores=OB.sinDolor?[]:OB.dolores.slice();
  c.edad=+document.getElementById('oE').value||c.edad;
  c.altura=+document.getElementById('oH').value||c.altura;
  c.objetivo=+document.getElementById('oO').value||c.objetivo;
  c.ritmo=document.getElementById('oR').value;
+ c.nivelProt=document.getElementById('oN').value;
  c.meds=document.getElementById('oM').value.split('\n').map(x=>x.trim()).filter(Boolean);
  const w=+document.getElementById('oW').value||lastWeight();
- if(w&&Math.abs(w-lastWeight())>0.05){S.weights=S.weights.filter(x=>x.d!==CUR);S.weights.push({d:CUR,w:w,bf:null});S.weights.sort((a,b)=>a.d<b.d?-1:1);}
+ const ci=parseFloat(document.getElementById('oC').value);
+ if((w&&Math.abs(w-lastWeight())>0.05)||!isNaN(ci)){
+  S.weights=S.weights.filter(x=>x.d!==CUR);
+  S.weights.push({d:CUR,w:w,bf:null,c:isNaN(ci)?null:ci});
+  S.weights.sort((a,b)=>a.d<b.d?-1:1);
+ }
  c.peso=w; c.onboard=true;
  const t=tdee(), cut={suave:.15,moderado:.22,firme:.28}[c.ritmo];
  c.kcal=Math.max(1600,Math.round((t*(1-cut))/10)*10);
- c.prot=Math.round(1.8*c.objetivo/5)*5;
- const maxC=2.2*c.objetivo, altC=(c.kcal-c.prot*4-0.6*c.objetivo*9)/4;
- c.carb=Math.max(60,Math.round(Math.min(maxC,altC)/5)*5);
- c.gras=Math.max(35,Math.round((c.kcal-c.prot*4-c.carb*4)/9/5)*5);
+ c.prot=protPorNivel(c.nivelProt);
+ c.fibra=Math.min(40,Math.max(28,Math.round(14*c.kcal/1000)));
+ c.gras=Math.max(50,Math.round(0.8*c.objetivo/5)*5);
+ c.carb=Math.max(60,Math.round((c.kcal-c.prot*4-c.gras*9)/4/5)*5);
  OB=null; save(); render();
- toast('Plan creado: '+c.kcal+' kcal y '+c.dias+' días de entreno');
+ diagnosticoSheet();
+}
+function diagnosticoSheet(){
+ const c=S.cfg, w=lastWeight(), lc=lastWith('c');
+ const icv=lc?(lc.c/c.altura):null;
+ openSheet('<div class="hd"><b>Tu diagnóstico</b><button onclick="closeSheet()">×</button></div>'+
+ '<div class="muted" style="margin-bottom:12px">Esto es lo que la app concluyó con lo que le diste. Todo es editable en Ajustes.</div>'+
+ '<div class="card tight"><h2>Lo que vas a comer</h2><table class="kv">'+
+  '<tr><td>Calorías al día</td><td class="num">'+c.kcal+' kcal</td></tr>'+
+  '<tr><td>Proteína</td><td class="num">'+c.prot+' g</td></tr>'+
+  '<tr><td>Fibra</td><td class="num">'+c.fibra+' g</td></tr>'+
+  '<tr><td>Gasto estimado</td><td class="num">'+tdee()+' kcal</td></tr>'+
+  '<tr><td>Ritmo esperado</td><td class="num">'+((tdee()-c.kcal)*7/7700).toFixed(2)+' kg/semana</td></tr>'+
+ '</table></div>'+
+ '<div class="card tight"><h2>Lo que vas a entrenar</h2><table class="kv">'+
+  '<tr><td>Días por semana</td><td class="num">'+c.dias+'</td></tr>'+
+  '<tr><td>Minutos por sesión</td><td class="num">'+c.minutos+'</td></tr>'+
+  '<tr><td>Total semanal</td><td class="num">'+(c.dias*c.minutos)+' min</td></tr>'+
+  '<tr><td>Objetivos</td><td class="num">'+(c.objetivos||[]).map(o=>(OBJ.find(x=>x[0]===o)||['',''])[1]).join(', ')+'</td></tr>'+
+ '</table></div>'+
+ (c.dolores&&c.dolores.length
+  ? '<div class="flag amber"><span>!</span><div>Marcaste molestia en '+c.dolores.map(d=>(DOLORES.find(x=>x[0]===d)||['',''])[1].toLowerCase()).join(' y ')+
+    '. Los ejercicios que cargan esas articulaciones ya salieron de tus rutinas. Si el dolor sigue más de dos semanas o aparece en reposo, consulta a un profesional.</div></div>'
+  : '')+
+ (icv&&icv>=0.5
+  ? '<div class="flag amber"><span>·</span><div>Tu cintura entre estatura da '+icv.toFixed(2)+'. La meta es bajar de 0.50, que con tus '+c.altura+' cm significa cintura por debajo de '+Math.round(c.altura*0.5)+' cm. Es el número que se mueve antes que la báscula.</div></div>'
+  : '')+
+ '<div class="flag teal"><span>→</span><div>Primeros tres pasos: pésate mañana en ayunas, mídete la cintura, y haz la sesión de hoy aunque sea la versión corta. El resto se acomoda solo.</div></div>'+
+ '<button class="btn" onclick="closeSheet()">Empezar</button>');
 }
 function rPlanCard(){
  const wk=planWeek();
