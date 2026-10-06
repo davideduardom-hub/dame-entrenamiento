@@ -2228,26 +2228,36 @@ function icsAyuno(){
  const a=S.cfg.ayuno;
  if(!a||!a.activo){toast('Primero elige tu plan de ayuno');return;}
  const pad=x=>String(x).padStart(2,'0');
- const hhI=a.inicio.split(':'), hhF=a.fin.split(':');
- const hoy=new Date();
- const stamp=hoy.getUTCFullYear()+pad(hoy.getUTCMonth()+1)+pad(hoy.getUTCDate())+'T'+pad(hoy.getUTCHours())+pad(hoy.getUTCMinutes())+'00Z';
- const d0=pad(hoy.getFullYear())+pad(hoy.getMonth()+1)+pad(hoy.getDate());
- const ev=(uid,h,mn,titulo,desc)=>
-  'BEGIN:VEVENT\r\nUID:'+uid+'@dameentrenamiento\r\nDTSTAMP:'+stamp+
-  '\r\nDTSTART:'+d0+'T'+pad(h)+pad(mn)+'00\r\nDURATION:PT15M\r\nRRULE:FREQ=DAILY'+
-  '\r\nSUMMARY:'+titulo+'\r\nDESCRIPTION:'+desc+
-  '\r\nBEGIN:VALARM\r\nTRIGGER:PT0M\r\nACTION:DISPLAY\r\nDESCRIPTION:'+titulo+'\r\nEND:VALARM\r\nEND:VEVENT\r\n';
+ const ay=hoyAyuno();
+ // apertura: la marcada, si no el objetivo calculado, si no la del plan
+ let ini=(ay.abre!=null)?ay.abre:horaObjetivo();
+ if(ini==null)ini=hhmm(a.inicio);
+ const meta=metaAyuno();
+ const dur=1440-(meta!=null?meta:(1440-((hhmm(a.fin)-hhmm(a.inicio)+1440)%1440)));
+ let fin=(ini+dur)%1440;
+ const d=parseD(CUR);
+ const dia=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
+ const d2=new Date(d); if(fin<ini)d2.setDate(d2.getDate()+1);
+ const dia2=d2.getFullYear()+pad(d2.getMonth()+1)+pad(d2.getDate());
+ const n=new Date();
+ const stamp=n.getUTCFullYear()+pad(n.getUTCMonth()+1)+pad(n.getUTCDate())+'T'+pad(n.getUTCHours())+pad(n.getUTCMinutes())+'00Z';
+ const uid='ayuno-'+dia+'-'+Math.random().toString(36).slice(2,8);
  const ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Dame entrenamiento//ES\r\nCALSCALE:GREGORIAN\r\n'+
-  ev('abre',+hhI[0],+hhI[1],'Ya puedes romper el ayuno','Empieza por la proteina y la verdura. Deja el arroz para el final.')+
-  ev('cierra',+hhF[0],+hhF[1],'Cierra tu ventana de comida','Ultima oportunidad de comer. Despues, agua, cafe negro o te sin azucar.')+
-  'END:VCALENDAR\r\n';
+  'BEGIN:VEVENT\r\nUID:'+uid+'@dameentrenamiento\r\nDTSTAMP:'+stamp+
+  '\r\nDTSTART:'+dia+'T'+pad(Math.floor(ini/60))+pad(ini%60)+'00'+
+  '\r\nDTEND:'+dia2+'T'+pad(Math.floor(fin/60))+pad(fin%60)+'00'+
+  '\r\nSUMMARY:Ventana de comida'+
+  '\r\nDESCRIPTION:Ayuno de '+Math.round(dur===1440?0:(1440-dur)/60*10)/10+' h. Empieza por la proteina y la verdura; deja el arroz para el final.'+
+  '\r\nBEGIN:VALARM\r\nTRIGGER:PT0M\r\nACTION:DISPLAY\r\nDESCRIPTION:Ya puedes romper el ayuno\r\nEND:VALARM'+
+  '\r\nBEGIN:VALARM\r\nTRIGGER;RELATED=END:-PT15M\r\nACTION:DISPLAY\r\nDESCRIPTION:Cierra tu ventana en 15 minutos\r\nEND:VALARM'+
+  '\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n';
  try{
   const blob=new Blob([ics],{type:'text/calendar'});
   const url=URL.createObjectURL(blob);
-  const a2=document.createElement('a'); a2.href=url; a2.download='ayuno.ics';
-  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  const el=document.createElement('a'); el.href=url; el.download='ventana-'+CUR+'.ics';
+  document.body.appendChild(el); el.click(); document.body.removeChild(el);
   setTimeout(()=>URL.revokeObjectURL(url),4000);
-  toast('Ábrelo y añádelo a tu calendario');
+  toast('Ventana de '+hm(ini)+' a '+hm(fin)+' para hoy');
  }catch(e){ toast('No se pudo generar el archivo'); }
 }
 function avisosSheet(){
@@ -2255,8 +2265,8 @@ function avisosSheet(){
  openSheet('<div class="hd"><b>Avisos del ayuno</b><button onclick="closeSheet()">×</button></div>'+
  '<div class="muted" style="margin-bottom:14px">Dos formas, y conviene tener las dos.</div>'+
  '<div class="card tight" style="margin-bottom:12px"><h2>1. Recordatorio en el calendario</h2>'+
-  '<div class="muted" style="margin-bottom:10px">El más confiable: te avisa aunque la app esté cerrada, todos los días, con la alarma de tu iPhone. Se añade una vez y queda.</div>'+
-  '<button class="btn" onclick="icsAyuno()">Crear el recordatorio diario</button></div>'+
+  '<div class="muted" style="margin-bottom:10px">Crea un bloque en tu calendario solo para hoy, con la ventana exacta y dos alarmas: una al abrir y otra quince minutos antes de cerrar. No repite nada ni te llena el calendario.</div>'+
+  '<button class="btn" onclick="icsAyuno()">Crear el bloque de hoy</button></div>'+
  '<div class="card tight"><h2>2. Aviso desde la app</h2>'+
   '<div class="muted" style="margin-bottom:10px">'+
    (st==='granted'
