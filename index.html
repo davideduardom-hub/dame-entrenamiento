@@ -951,7 +951,8 @@ function rComida(){
  h+='<div class="row" style="margin-bottom:12px"><button class="btn" onclick="handSheet()">Estimar por manos</button><button class="btn ghost" onclick="searchSheet()">Buscar alimento</button></div>';
  h+='<div class="row" style="margin-bottom:10px"><button class="btn ghost sm" style="flex:1" onclick="photoSheet()">Añadir foto del plato</button><button class="btn ghost sm" style="flex:1" onclick="repeatYesterday()">Repetir ayer</button></div>';
  h+='<button class="btn ghost sm" style="width:100%;margin-bottom:10px" onclick="costoSheet()">Proteína y fibra al menor costo</button>';
- h+='<button class="btn ghost sm" style="width:100%;margin-bottom:14px" onclick="antojoSheet()">Tengo un antojo ahora</button>';
+ h+='<button class="btn ghost sm" style="width:100%;margin-bottom:10px" onclick="antojoSheet()">Tengo un antojo ahora</button>';
+ if(S.cfg.ayuno&&S.cfg.ayuno.activo)h+='<button class="btn ghost sm" style="width:100%;margin-bottom:14px" onclick="sugerenciasSheet()">Qué me conviene comer ahora</button>';
 
  if(S.favs.length){
   h+='<div class="card tight"><h2>Tus habituales</h2><div class="chips">'+
@@ -1676,57 +1677,188 @@ function protPorNivel(nv){
 
 
 /* ---------- Ayuno intermitente ---------- */
-const PRESETS=[['16:8','12:00','20:00','Ocho horas para comer. El más usado y el más sostenible.'],
-               ['14:10','10:00','20:00','Diez horas. Buen punto de entrada si vienes de comer todo el día.'],
-               ['18:6','13:00','19:00','Seis horas. Exigente: cuesta meter tu proteína en dos comidas.'],
-               ['20:4','14:00','18:00','Cuatro horas. Solo para días puntuales, no como rutina.']];
 function hhmm(s){const p=(s||'12:00').split(':');return (+p[0])*60+(+p[1]);}
-function fmtMin(m){const h=Math.floor(m/60),x=m%60;return h?(h+' h '+(x?x+' min':'')).trim():x+' min';}
-function ventana(){
- const a=S.cfg.ayuno; if(!a||!a.activo)return null;
- const now=new Date(), m=now.getHours()*60+now.getMinutes();
- const i=hhmm(a.inicio), f=hhmm(a.fin);
- const abierta=(i<=f)?(m>=i&&m<f):(m>=i||m<f);
- let falta;
- if(abierta) falta=(f-m+1440)%1440;
- else falta=(i-m+1440)%1440;
- const total=((f-i)+1440)%1440;
- return {abierta:abierta,falta:falta,total:total,i:i,f:f,ayuno:1440-total};
+function fmtMin(m){const h=Math.floor(m/60),x=Math.round(m%60);return h?(h+' h '+(x?x+' min':'')).trim():x+' min';}
+function hm(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.round(m%60)).padStart(2,'0');}
+/* ---------- Ayuno: planes y control manual ---------- */
+const PLANES_AY=[
+ ['12:12','12:12','08:00','20:00','Doce horas. El punto de entrada: solo quita el picoteo nocturno.'],
+ ['14:10','14:10','10:00','20:00','Catorce horas. Buen escalón intermedio, fácil de sostener.'],
+ ['16:8','16:8','12:00','20:00','Dieciséis horas. El más usado y el que mejor equilibrio tiene.'],
+ ['18:6','18:6','13:00','19:00','Dieciocho horas. Exigente: cuesta meter la proteína en dos comidas.'],
+ ['20:4','20:4','14:00','18:00','Veinte horas. Para días puntuales, no como rutina.']
+];
+function hoyAyuno(){ const l=day(CUR); if(!l.ay)l.ay={}; return l.ay; }
+function marcarCierre(){
+ const a=hoyAyuno(), n=new Date();
+ a.cierre=n.getHours()*60+n.getMinutes(); save(); render();
+ toast('Última comida a las '+hm(a.cierre));
 }
+function marcarApertura(){
+ const a=hoyAyuno(), n=new Date();
+ a.abre=n.getHours()*60+n.getMinutes(); save(); render();
+ const ay=ayunoReal();
+ toast(ay?('Ayuno de '+Math.floor(ay/60)+' h '+Math.round(ay%60)+' min'):'Ayuno roto');
+}
+function editarHoras(){
+ const a=hoyAyuno();
+ openSheet('<div class="hd"><b>Horas de hoy</b><button onclick="closeSheet()">×</button></div>'+
+ '<div class="muted" style="margin-bottom:12px">Ajústalas si marcaste tarde o se te pasó. Si las dejas vacías, la app usa la hora de tu primera y tu última comida registrada.</div>'+
+ '<div class="row"><label class="f"><span>Rompí el ayuno a las</span><input type="time" id="ayA" value="'+(a.abre!=null?hm(a.abre):'')+'"></label>'+
+ '<label class="f"><span>Última comida a las</span><input type="time" id="ayC" value="'+(a.cierre!=null?hm(a.cierre):'')+'"></label></div>'+
+ '<button class="btn" onclick="guardarHoras()">Guardar</button>'+
+ '<button class="btn ghost" style="margin-top:9px" onclick="borrarHoras()">Borrar las dos</button>');
+}
+function guardarHoras(){
+ const a=hoyAyuno();
+ const va=document.getElementById('ayA').value, vc=document.getElementById('ayC').value;
+ a.abre=va?hhmm(va):null; a.cierre=vc?hhmm(vc):null;
+ if(a.abre==null)delete a.abre; if(a.cierre==null)delete a.cierre;
+ save(); closeSheet(); render();
+}
+function borrarHoras(){ const a=hoyAyuno(); delete a.abre; delete a.cierre; save(); closeSheet(); render(); }
+
+/* Apertura y cierre efectivos: lo marcado a mano manda; si no, las comidas */
+function aperturaDe(k){
+ const l=S.log[k]||{}; if(l.ay&&l.ay.abre!=null)return l.ay.abre;
+ const v=ventanaReal(k); return v?v.ini:null;
+}
+function cierreDe(k){
+ const l=S.log[k]||{}; if(l.ay&&l.ay.cierre!=null)return l.ay.cierre;
+ const v=ventanaReal(k); return v?v.fin:null;
+}
+function ayunoReal(){
+ const a=aperturaDe(CUR);
+ const d=parseD(CUR); d.setDate(d.getDate()-1);
+ const cAyer=cierreDe(ymd(d));
+ if(a==null)return null;
+ if(cAyer==null)return null;
+ return (a+1440-cAyer)%1440;
+}
+
+/* ---------- Tarjeta de control en Hoy ---------- */
 function rVentana(){
- const v=ventana(); if(!v)return '';
  const a=S.cfg.ayuno;
- const pct=v.abierta?Math.max(0,100-(v.falta/v.total*100)):Math.max(0,100-(v.falta/v.ayuno*100));
- return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'+
-  '<h2 style="margin:0">'+(v.abierta?'Ventana abierta':'En ayuno')+'</h2>'+
-  '<span class="num" style="font-size:13px;color:var(--text-faint)">'+a.inicio+' a '+a.fin+'</span></div>'+
-  '<div class="big" style="display:flex;align-items:flex-end;gap:9px;margin-top:6px">'+
-   '<b class="num" style="font-size:34px;font-weight:800;line-height:1;letter-spacing:-.04em;color:'+(v.abierta?'var(--teal)':'var(--accent)')+'">'+fmtMin(v.falta)+'</b>'+
-   '<span class="muted" style="padding-bottom:3px">'+(v.abierta?'para que cierre':'para poder comer')+'</span></div>'+
-  '<div class="track" style="height:10px;margin:12px 0 0"><div class="fill'+(v.abierta?'':' over')+'" style="width:'+pct+'%;background:'+(v.abierta?'var(--teal)':'var(--accent)')+'"></div></div>'+
-  '<div class="faint" style="margin-top:9px">'+(v.abierta
-    ? 'Reparte tu proteína en las comidas que quedan: apunta a unos '+Math.round(S.cfg.prot/2)+' g en cada una.'
-    : 'Agua, café negro y té sin azúcar no rompen el ayuno. Si entrenas ahora, hazlo suave.')+'</div>'+
-  '<button class="btn ghost sm" style="width:100%;margin-top:11px" onclick="ayunoSheet()">Ajustar la ventana</button></div>';
+ if(!a||!a.activo){
+  return '<div class="card"><h2>Ayuno intermitente</h2>'+
+   '<div class="muted">Elige un plan y la app te lleva la cuenta: cuánto falta para romperlo, cuánto te queda de ventana y qué comer para no pasarte.</div>'+
+   '<button class="btn ghost sm" style="width:100%;margin-top:12px" onclick="ayunoSheet()">Elegir mi plan</button></div>';
+ }
+ const ay=hoyAyuno(), now=new Date(), m=now.getHours()*60+now.getMinutes();
+ const i=hhmm(a.inicio), f=hhmm(a.fin);
+ const abiertaPlan=(i<=f)?(m>=i&&m<f):(m>=i||m<f);
+ const total=((f-i)+1440)%1440;
+ const yaAbrio=ay.abre!=null, yaCerro=ay.cierre!=null;
+ const enVentana = yaAbrio && !yaCerro;
+ const t=totals(CUR), rest=Math.round(S.cfg.kcal-t.kcal);
+
+ let titulo,grande,sub,color,pct;
+ if(enVentana){
+  const fin=Math.max(0,(f-m+1440)%1440);
+  const trans=Math.max(0,(m-ay.abre+1440)%1440);
+  titulo='Ventana abierta'; grande=fmtMin(fin); sub='para cerrar a las '+a.fin;
+  color='var(--teal)'; pct=Math.min(100,trans/total*100);
+ }else if(yaCerro){
+  const prox=(i-m+1440)%1440;
+  const desde=(m-ay.cierre+1440)%1440;
+  titulo='En ayuno'; grande=fmtMin(desde); sub='desde que cerraste, a las '+hm(ay.cierre);
+  color='var(--accent)'; pct=Math.min(100,desde/(1440-total)*100);
+ }else{
+  const falta=(i-m+1440)%1440;
+  const ar=ayunoReal();
+  titulo='En ayuno'; grande=abiertaPlan?'Ya puedes':fmtMin(falta);
+  sub=abiertaPlan?'romper el ayuno':'para romper el ayuno';
+  if(ar!=null)sub+=' · llevas '+fmtMin(ar);
+  color='var(--accent)'; pct=abiertaPlan?100:Math.max(0,100-falta/(1440-total)*100);
+ }
+
+ let h='<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'+
+  '<h2 style="margin:0">'+titulo+'</h2>'+
+  '<span class="num" style="font-size:12.5px;color:var(--text-faint)">'+a.preset+' · '+a.inicio+' a '+a.fin+'</span></div>'+
+  '<div style="display:flex;align-items:flex-end;gap:9px;margin-top:6px">'+
+   '<b class="num" style="font-size:34px;font-weight:800;line-height:1;letter-spacing:-.04em;color:'+color+'">'+grande+'</b>'+
+   '<span class="muted" style="padding-bottom:3px">'+sub+'</span></div>'+
+  '<div class="track" style="height:10px;margin:12px 0 0"><div class="fill" style="width:'+pct+'%;background:'+color+'"></div></div>';
+
+ if(!yaAbrio){
+  h+='<button class="btn" style="margin-top:12px" onclick="marcarApertura()">Romper el ayuno ahora</button>';
+  h+='<div class="faint" style="margin-top:9px">Agua, café negro y té sin azúcar no lo rompen.</div>';
+ }else if(!yaCerro){
+  h+='<div class="faint" style="margin-top:10px">Abriste a las '+hm(ay.abre)+'. Te quedan <b>'+rest+' kcal</b> y <b>'+Math.max(0,Math.round(S.cfg.prot-t.p))+' g de proteína</b> dentro de la ventana.</div>';
+  h+='<div class="row" style="margin-top:11px"><button class="btn ok" onclick="marcarCierre()">Cerrar la ventana</button>'+
+     '<button class="btn ghost" onclick="sugerenciasSheet()">Qué me conviene comer</button></div>';
+ }else{
+  h+='<div class="faint" style="margin-top:10px">Ventana de '+hm(ay.abre!=null?ay.abre:0)+' a '+hm(ay.cierre)+'. Mañana el contador arranca solo.</div>';
+ }
+ h+='<button class="btn ghost sm" style="width:100%;margin-top:9px" onclick="editarHoras()">Ajustar horas</button>';
+ h+='</div>';
+ return h;
+}
+
+/* ---------- Qué comer con lo que queda ---------- */
+function sugerenciasSheet(){
+ const t=totals(CUR), c=S.cfg;
+ const rest=Math.max(0,c.kcal-t.kcal), fp=Math.max(0,c.prot-t.p), ff=Math.max(0,c.fibra-t.fb);
+ const ay=hoyAyuno(), now=new Date(), m=now.getHours()*60+now.getMinutes();
+ const cierra=Math.max(0,(hhmm(c.ayuno.fin)-m+1440)%1440);
+ const comidas=cierra>240?3:(cierra>120?2:1);
+ const porC=Math.round(rest/comidas/10)*10, protC=Math.round(fp/comidas/5)*5;
+
+ // ordena alimentos por proteína y fibra por caloría, dentro de lo que queda
+ const cand=allFoods().filter(f=>!['azucar','alcohol','frito'].includes(f[6])&&f[2]>20)
+  .map(f=>{
+    const ports=f[7]&&f[7].length?f[7]:(PORT[f[1]]||PORT.carbo);
+    const g=ports[0][1], r=g/100;
+    return {n:f[0],q:ports[0][0],g:g,kcal:f[2]*r,p:f[3]*r,fb:(FIB[f[0]]||0)*r};
+  })
+  .filter(x=>x.kcal<=Math.max(140,porC*1.15)&&x.kcal>=25)
+  .map(x=>Object.assign(x,{score:(x.p*4+x.fb*2.5)/Math.max(40,x.kcal)}))
+  .sort((a,b)=>b.score-a.score).slice(0,9);
+
+ openSheet('<div class="hd"><b>Qué te conviene comer</b><button onclick="closeSheet()">×</button></div>'+
+ '<div class="card tight" style="margin-bottom:12px"><table class="kv">'+
+  '<tr><td>Te quedan</td><td class="num">'+Math.round(rest)+' kcal</td></tr>'+
+  '<tr><td>Proteína por cubrir</td><td class="num">'+Math.round(fp)+' g</td></tr>'+
+  '<tr><td>Fibra por cubrir</td><td class="num">'+Math.round(ff)+' g</td></tr>'+
+  '<tr><td>Cierras en</td><td class="num">'+fmtMin(cierra)+'</td></tr>'+
+ '</table></div>'+
+ '<div class="muted" style="margin-bottom:12px">'+
+  (rest<=0
+   ? 'Ya llegaste a tu objetivo de calorías. Si tienes hambre real antes de cerrar, come verdura y proteína magra: te saciará sin mover el déficit de forma significativa.'
+   : 'Con '+Math.round(rest)+' kcal y '+fmtMin(cierra)+' por delante, te caben unas '+comidas+' '+(comidas===1?'comida':'comidas')+' de alrededor de '+porC+' kcal y '+protC+' g de proteína cada una.')+
+ '</div>'+
+ '<div style="font-size:13.5px;font-weight:700;margin-bottom:6px">Lo que más te rinde ahora</div>'+
+ (cand.length
+  ? cand.map(x=>'<button class="fitem" onclick="desdeSugerencia('+JSON.stringify(x.n).replace(/"/g,'&quot;')+','+x.g+')">'+
+     '<span><b>'+esc(x.n)+'</b><span>'+esc(x.q)+' · '+Math.round(x.p)+' g de proteína'+(x.fb>=1?' · '+x.fb.toFixed(1)+' g de fibra':'')+'</span></span>'+
+     '<em>'+Math.round(x.kcal)+'</em></button>').join('')
+  : '<div class="faint">Con las calorías que quedan, mejor agua y verdura. Mañana ajustamos el reparto para que no llegues tan justo a la noche.</div>')+
+ '<div class="faint" style="margin-top:12px">Ordenado por proteína y fibra que aporta cada caloría: así llenas tus metas sin pasarte. Toca uno para registrarlo.</div>');
+}
+function desdeSugerencia(nombre,g){
+ const i=allFoods().findIndex(f=>f[0]===nombre);
+ if(i<0)return;
+ SRCH_MEAL=mealNow(); PSEL=allFoods()[i]; PGR=g;
+ closeSheet(); portionSheet(i);
 }
 function ayunoSheet(){
  const a=S.cfg.ayuno||{activo:false,inicio:'12:00',fin:'20:00',preset:'16:8'};
- openSheet('<div class="hd"><b>Ayuno intermitente</b><button onclick="closeSheet()">×</button></div>'+
- '<div class="row" style="margin-bottom:14px"><button class="btn '+(a.activo?'ok':'ghost')+'" onclick="setAyuno(true)">Activado</button>'+
+ openSheet('<div class="hd"><b>Mi plan de ayuno</b><button onclick="closeSheet()">×</button></div>'+
+ '<div class="row" style="margin-bottom:16px"><button class="btn '+(a.activo?'ok':'ghost')+'" onclick="setAyuno(true)">Activado</button>'+
  '<button class="btn '+(a.activo?'ghost':'ok')+'" onclick="setAyuno(false)">Desactivado</button></div>'+
- '<div class="chips" style="margin-bottom:14px">'+PRESETS.map(p=>
-   '<button class="chip'+(a.preset===p[0]?' on':'')+'" onclick="setPreset(\''+p[0]+'\')">'+p[0]+'</button>').join('')+'</div>'+
- '<div class="faint" style="margin-bottom:14px">'+esc((PRESETS.find(p=>p[0]===a.preset)||PRESETS[0])[3])+'</div>'+
- '<div class="row"><label class="f"><span>Primera comida</span><input type="time" id="ayI" value="'+a.inicio+'"></label>'+
- '<label class="f"><span>Última comida</span><input type="time" id="ayF" value="'+a.fin+'"></label></div>'+
- '<button class="btn" onclick="saveAyuno()">Guardar ventana</button>'+
- '<div class="flag amber" style="margin-top:14px"><span>!</span><div><b>Habla esto con tu médico antes</b><br>Si tomas algún medicamento que se indica con comida, saltarte el desayuno deja esa dosis sin comida al lado. Eso se reajusta con quien te lo recetó, nunca por tu cuenta. Tampoco entrenes fuerte al final de un ayuno largo las primeras semanas, hasta ver cómo responde tu energía.</div></div>'+
- '<div class="faint" style="margin-top:12px">Lo que el ayuno sí te da: menos horas de comida, menos decisiones, y toda tu energía concentrada donde la necesitas. Lo que no te da: permiso para saltarte la proteína. Si comes en ocho horas, esa proteína tiene que entrar igual, en dos o tres comidas grandes.</div>');
+ PLANES_AY.map(p=>'<button class="block'+(a.preset===p[0]?' done':'')+'" style="margin-bottom:8px" onclick="setPreset(\''+p[0]+'\')">'+
+   '<span class="tick">✓</span><span class="txt"><b>'+p[1]+' · '+p[2]+' a '+p[3]+'</b><span>'+esc(p[4])+'</span></span></button>').join('')+
+ '<div class="faint" style="margin:14px 0 8px">O define tus propias horas</div>'+
+ '<div class="row"><label class="f"><span>Rompo el ayuno a las</span><input type="time" id="ayI" value="'+a.inicio+'"></label>'+
+ '<label class="f"><span>Última comida a las</span><input type="time" id="ayF" value="'+a.fin+'"></label></div>'+
+ '<button class="btn" onclick="saveAyuno()">Guardar mi ventana</button>'+
+ '<div class="flag amber" style="margin-top:16px"><span>!</span><div><b>Habla esto con tu médico antes</b><br>Si tomas algún medicamento que se indica con comida, saltarte el desayuno deja esa dosis sin comida al lado: eso se reajusta con quien te lo recetó, nunca por tu cuenta. Tampoco entrenes fuerte al final de un ayuno largo las primeras semanas, hasta ver cómo responde tu energía.</div></div>'+
+ '<div class="faint" style="margin-top:12px">Lo que el ayuno sí te da: menos horas de comida, menos decisiones, y toda tu energía concentrada donde la necesitas. Lo que no te da: permiso para saltarte la proteína. Si comes en ocho horas, esa proteína tiene que entrar igual, repartida en dos o tres comidas.</div>');
 }
 function setAyuno(v){S.cfg.ayuno=S.cfg.ayuno||{inicio:'12:00',fin:'20:00',preset:'16:8'};S.cfg.ayuno.activo=v;save();ayunoSheet();render();}
 function setPreset(k){
- const p=PRESETS.find(x=>x[0]===k);
- S.cfg.ayuno={activo:true,preset:k,inicio:p[1],fin:p[2]};save();ayunoSheet();render();
+ const p=PLANES_AY.find(x=>x[0]===k)||PLANES_AY[2];
+ S.cfg.ayuno={activo:true,preset:k,inicio:p[2],fin:p[3]};save();ayunoSheet();render();
 }
 function saveAyuno(){
  const i=document.getElementById('ayI').value||'12:00', f=document.getElementById('ayF').value||'20:00';
@@ -1957,13 +2089,15 @@ function kcalAntojos(dias){
 
 /* ---------- Seguimiento del ayuno ---------- */
 function ventanaReal(k){
- const f=((S.log[k]||{}).food||[]).filter(x=>typeof x.t==='number' && x.kcal>25);
- if(!f.length)return null;
+ const l=S.log[k]||{}, ay=l.ay||{};
+ const f=(l.food||[]).filter(x=>typeof x.t==='number' && x.kcal>25);
  const ts=f.map(x=>x.t);
- const ini=Math.min.apply(null,ts), fin=Math.max.apply(null,ts);
- return {ini:ini, fin:fin, dur:Math.max(0,fin-ini), ayuno:1440-Math.max(0,fin-ini), n:f.length};
+ const ini=(ay.abre!=null)?ay.abre:(ts.length?Math.min.apply(null,ts):null);
+ const fin=(ay.cierre!=null)?ay.cierre:(ts.length?Math.max.apply(null,ts):null);
+ if(ini==null||fin==null)return null;
+ return {ini:ini, fin:fin, dur:Math.max(0,fin-ini), ayuno:1440-Math.max(0,fin-ini), n:f.length,
+         manual:(ay.abre!=null||ay.cierre!=null)};
 }
-function hm(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.round(m%60)).padStart(2,'0');}
 function cumplioAyuno(k){
  const v=ventanaReal(k), a=S.cfg.ayuno;
  if(!v||!a||!a.activo)return null;
