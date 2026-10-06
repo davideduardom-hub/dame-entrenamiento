@@ -697,7 +697,7 @@ function freshState(){
        kcal:2000,prot:140,carb:200,gras:65,agua:3000,fibra:35,nivelProt:'equilibrado',
        dias:6,gym:true,onboard:false,ritmo:'moderado',objetivos:['grasa','resistencia'],impacto:'bajo',
        meds:[],
-       minutos:45,dolores:[],equipo:'ambos',
+       minutos:45,dolores:[],equipo:'ambos',avisos:false,
        ayuno:{activo:false,preset:'16:8',inicio:'12:00',fin:'20:00'},
        alternativas:[],planes:[],
        nota:''},
@@ -1472,7 +1472,8 @@ function rAjustes(){
   '<button class="btn ghost sm" style="width:100%;margin-bottom:9px" onclick="planesSheet()">Mi plan si-entonces</button>'+
   '<button class="btn ghost sm" style="width:100%" onclick="editAlternativas()">Editar mis alternativas</button></div>';
  h+='<div class="card"><h2>Ayuno intermitente</h2><div class="muted" style="margin-bottom:10px">'+(S.cfg.ayuno&&S.cfg.ayuno.activo?('Ventana activa de '+S.cfg.ayuno.inicio+' a '+S.cfg.ayuno.fin+'.'):'Sin ventana activa.')+' Define en qué horas comes y la app te lleva la cuenta.</div>'+
-  '<button class="btn ghost sm" style="width:100%" onclick="ayunoSheet()">Configurar la ventana</button></div>';
+  '<button class="btn ghost sm" style="width:100%;margin-bottom:9px" onclick="ayunoSheet()">Configurar mi plan</button>'+
+  '<button class="btn ghost sm" style="width:100%" onclick="avisosSheet()">Avisos y recordatorios</button></div>';
  h+='<div class="card"><h2>Comer bien con poco presupuesto</h2><div class="muted" style="margin-bottom:10px">Qué comprar para llegar a tu proteína y tu fibra gastando lo menos posible. Edita los precios con los que pagas tú y la lista se reordena sola.</div>'+
   '<button class="btn ghost sm" style="width:100%" onclick="costoSheet()">Abrir la calculadora de costo</button></div>';
  h+='<div class="card"><h2>Calibrador de porciones</h2><div class="muted" style="margin-bottom:10px">Tus manos son la báscula que siempre llevas encima. Mide una vez con balanza y comprueba que estas equivalencias te sirven.</div>'+
@@ -1691,7 +1692,7 @@ const PLANES_AY=[
 function hoyAyuno(){ const l=day(CUR); if(!l.ay)l.ay={}; return l.ay; }
 function marcarCierre(){
  const a=hoyAyuno(), n=new Date();
- a.cierre=n.getHours()*60+n.getMinutes(); save(); render();
+ a.cierre=n.getHours()*60+n.getMinutes(); save(); render(); programarAviso();
  toast('Última comida a las '+hm(a.cierre));
 }
 function marcarApertura(){
@@ -1746,8 +1747,9 @@ function rVentana(){
  }
  const ay=hoyAyuno(), now=new Date(), m=now.getHours()*60+now.getMinutes();
  const i=hhmm(a.inicio), f=hhmm(a.fin);
- const abiertaPlan=(i<=f)?(m>=i&&m<f):(m>=i||m<f);
- const total=((f-i)+1440)%1440;
+ const meta=metaAyuno(), obj=horaObjetivo();
+ const abiertaPlan=(obj!=null)?(((m-obj+1440)%1440)<720):((i<=f)?(m>=i&&m<f):(m>=i||m<f));
+ const total=1440-(meta!=null?meta:(1440-(((f-i)+1440)%1440)));
  const yaAbrio=ay.abre!=null, yaCerro=ay.cierre!=null;
  const enVentana = yaAbrio && !yaCerro;
  const t=totals(CUR), rest=Math.round(S.cfg.kcal-t.kcal);
@@ -1764,17 +1766,20 @@ function rVentana(){
   titulo='En ayuno'; grande=fmtMin(desde); sub='desde que cerraste, a las '+hm(ay.cierre);
   color='var(--accent)'; pct=Math.min(100,desde/(1440-total)*100);
  }else{
-  const falta=(i-m+1440)%1440;
-  const ar=ayunoReal();
+  const ref=(obj!=null)?obj:i;
+  const falta=(ref-m+1440)%1440;
+  const d2=parseD(CUR); d2.setDate(d2.getDate()-1);
+  const cAyer=cierreDe(ymd(d2));
+  const llev=(cAyer!=null)?((m-cAyer+1440)%1440):null;
   titulo='En ayuno'; grande=abiertaPlan?'Ya puedes':fmtMin(falta);
-  sub=abiertaPlan?'romper el ayuno':'para romper el ayuno';
-  if(ar!=null)sub+=' · llevas '+fmtMin(ar);
-  color='var(--accent)'; pct=abiertaPlan?100:Math.max(0,100-falta/(1440-total)*100);
+  sub=abiertaPlan?'romper el ayuno':('para las '+hm(ref));
+  if(llev!=null&&llev<1200)sub+=' · llevas '+fmtMin(llev);
+  color='var(--accent)'; pct=(llev!=null&&meta)?Math.min(100,llev/meta*100):(abiertaPlan?100:50);
  }
 
  let h='<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'+
   '<h2 style="margin:0">'+titulo+'</h2>'+
-  '<span class="num" style="font-size:12.5px;color:var(--text-faint)">'+a.preset+' · '+a.inicio+' a '+a.fin+'</span></div>'+
+  '<span class="num" style="font-size:12.5px;color:var(--text-faint)">'+(((S.log[CUR]||{}).ay||{}).meta!=null?fmtMin(meta)+' hoy':a.preset+' · '+a.inicio+' a '+a.fin)+'</span></div>'+
   '<div style="display:flex;align-items:flex-end;gap:9px;margin-top:6px">'+
    '<b class="num" style="font-size:34px;font-weight:800;line-height:1;letter-spacing:-.04em;color:'+color+'">'+grande+'</b>'+
    '<span class="muted" style="padding-bottom:3px">'+sub+'</span></div>'+
@@ -1782,11 +1787,14 @@ function rVentana(){
 
  if(!yaAbrio){
   h+='<button class="btn" style="margin-top:12px" onclick="marcarApertura()">Romper el ayuno ahora</button>';
+  h+='<div class="row" style="margin-top:9px"><button class="btn ghost sm" style="flex:1" onclick="flexSheet()">Cambiar el de hoy</button>'+
+     '<button class="btn ghost sm" style="flex:1" onclick="avisosSheet()">Avisarme</button></div>';
   h+='<div class="faint" style="margin-top:9px">Agua, café negro y té sin azúcar no lo rompen.</div>';
  }else if(!yaCerro){
   h+='<div class="faint" style="margin-top:10px">Abriste a las '+hm(ay.abre)+'. Te quedan <b>'+rest+' kcal</b> y <b>'+Math.max(0,Math.round(S.cfg.prot-t.p))+' g de proteína</b> dentro de la ventana.</div>';
   h+='<div class="row" style="margin-top:11px"><button class="btn ok" onclick="marcarCierre()">Cerrar la ventana</button>'+
      '<button class="btn ghost" onclick="sugerenciasSheet()">Qué me conviene comer</button></div>';
+  h+='<button class="btn ghost sm" style="width:100%;margin-top:9px" onclick="flexSheet()">Cambiar el ayuno de hoy</button>';
  }else{
   h+='<div class="faint" style="margin-top:10px">Ventana de '+hm(ay.abre!=null?ay.abre:0)+' a '+hm(ay.cierre)+'. Mañana el contador arranca solo.</div>';
  }
@@ -2148,6 +2156,122 @@ function rAyuno(){
   '<button class="btn ghost sm" style="width:100%;margin-top:12px" onclick="ayunoSheet()">Ajustar la ventana</button></div>';
 }
 
+/* ---------- Ayuno flexible: objetivo del día ---------- */
+function metaAyuno(k){
+ k=k||CUR;
+ const l=S.log[k]||{};
+ if(l.ay&&l.ay.meta!=null)return l.ay.meta;
+ const a=S.cfg.ayuno;
+ if(!a||!a.activo)return null;
+ const i=hhmm(a.inicio), f=hhmm(a.fin);
+ return 1440-(((f-i)+1440)%1440);
+}
+function setMetaHoy(min){
+ const a=hoyAyuno();
+ if(min==null)delete a.meta; else a.meta=min;
+ save(); render(); closeSheet();
+ toast(min==null?'Vuelve a tu plan de siempre':'Hoy apuntas a '+fmtMin(min));
+}
+function horaObjetivo(){
+ const d=parseD(CUR); d.setDate(d.getDate()-1);
+ const c=cierreDe(ymd(d));
+ const m=metaAyuno();
+ if(c==null||m==null)return null;
+ return (c+m)%1440;
+}
+function flexSheet(){
+ const m=metaAyuno(), base=(S.cfg.ayuno&&S.cfg.ayuno.activo)?metaAyuno(CUR):null;
+ const propio=(S.log[CUR]||{}).ay&&(S.log[CUR]||{}).ay.meta!=null;
+ const obj=horaObjetivo();
+ openSheet('<div class="hd"><b>El ayuno de hoy</b><button onclick="closeSheet()">×</button></div>'+
+ '<div class="muted" style="margin-bottom:12px">Hay días de 14 horas y días de 18. Elige el de hoy sin tocar tu plan de siempre: mañana vuelve solo.</div>'+
+ '<div class="chips" style="margin-bottom:14px">'+
+  [[12,'12 h'],[13,'13 h'],[14,'14 h'],[15,'15 h'],[16,'16 h'],[17,'17 h'],[18,'18 h'],[20,'20 h']]
+  .map(x=>'<button class="chip'+(m===x[0]*60?' on':'')+'" onclick="setMetaHoy('+(x[0]*60)+')">'+x[1]+'</button>').join('')+
+ '</div>'+
+ (obj!=null?'<div class="flag teal"><span>·</span><div>Con '+fmtMin(m)+' desde tu última comida, hoy puedes romper el ayuno a las <b>'+hm(obj)+'</b>.</div></div>':'')+
+ (propio?'<button class="btn ghost" style="margin-top:4px" onclick="setMetaHoy(null)">Volver a mi plan de siempre</button>':'')+
+ '<div class="faint" style="margin-top:14px">La app mide las horas reales desde tu última comida, no el reloj. Si anoche cerraste tarde, hoy se corre todo y el objetivo sigue siendo el mismo número de horas.</div>');
+}
+
+/* ---------- Aviso de que ya puedes comer ---------- */
+function avisoEstado(){
+ try{ return (typeof Notification==='undefined')?'no':Notification.permission; }catch(e){ return 'no'; }
+}
+function pedirAviso(){
+ if(avisoEstado()==='no'){toast('Este navegador no permite avisos. Usa el recordatorio de calendario.');return;}
+ try{
+  Notification.requestPermission().then(p=>{
+   S.cfg.avisos=(p==='granted'); save(); render();
+   toast(p==='granted'?'Listo: te aviso cuando puedas romper el ayuno':'No diste permiso para los avisos');
+  });
+ }catch(e){toast('No se pudo activar');}
+}
+let AVISO_T=null;
+function programarAviso(){
+ clearTimeout(AVISO_T);
+ if(!S.cfg.avisos||avisoEstado()!=='granted')return;
+ const ay=hoyAyuno(); if(ay.abre!=null)return;
+ const obj=horaObjetivo(); if(obj==null)return;
+ const n=new Date(), ahora=n.getHours()*60+n.getMinutes();
+ let falta=(obj-ahora+1440)%1440;
+ if(falta>720)return;
+ if(ay.avisado)return;
+ AVISO_T=setTimeout(()=>{
+  try{
+   new Notification('Ya puedes romper el ayuno',{body:'Completaste '+fmtMin(metaAyuno())+'. Empieza por la proteína y la verdura.',tag:'ayuno'});
+   hoyAyuno().avisado=1; save();
+  }catch(e){}
+ }, Math.max(1000,falta*60000));
+}
+function icsAyuno(){
+ const a=S.cfg.ayuno;
+ if(!a||!a.activo){toast('Primero elige tu plan de ayuno');return;}
+ const pad=x=>String(x).padStart(2,'0');
+ const hhI=a.inicio.split(':'), hhF=a.fin.split(':');
+ const hoy=new Date();
+ const stamp=hoy.getUTCFullYear()+pad(hoy.getUTCMonth()+1)+pad(hoy.getUTCDate())+'T'+pad(hoy.getUTCHours())+pad(hoy.getUTCMinutes())+'00Z';
+ const d0=pad(hoy.getFullYear())+pad(hoy.getMonth()+1)+pad(hoy.getDate());
+ const ev=(uid,h,mn,titulo,desc)=>
+  'BEGIN:VEVENT\r\nUID:'+uid+'@dameentrenamiento\r\nDTSTAMP:'+stamp+
+  '\r\nDTSTART:'+d0+'T'+pad(h)+pad(mn)+'00\r\nDURATION:PT15M\r\nRRULE:FREQ=DAILY'+
+  '\r\nSUMMARY:'+titulo+'\r\nDESCRIPTION:'+desc+
+  '\r\nBEGIN:VALARM\r\nTRIGGER:PT0M\r\nACTION:DISPLAY\r\nDESCRIPTION:'+titulo+'\r\nEND:VALARM\r\nEND:VEVENT\r\n';
+ const ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Dame entrenamiento//ES\r\nCALSCALE:GREGORIAN\r\n'+
+  ev('abre',+hhI[0],+hhI[1],'Ya puedes romper el ayuno','Empieza por la proteina y la verdura. Deja el arroz para el final.')+
+  ev('cierra',+hhF[0],+hhF[1],'Cierra tu ventana de comida','Ultima oportunidad de comer. Despues, agua, cafe negro o te sin azucar.')+
+  'END:VCALENDAR\r\n';
+ try{
+  const blob=new Blob([ics],{type:'text/calendar'});
+  const url=URL.createObjectURL(blob);
+  const a2=document.createElement('a'); a2.href=url; a2.download='ayuno.ics';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+  toast('Ábrelo y añádelo a tu calendario');
+ }catch(e){ toast('No se pudo generar el archivo'); }
+}
+function avisosSheet(){
+ const st=avisoEstado();
+ openSheet('<div class="hd"><b>Avisos del ayuno</b><button onclick="closeSheet()">×</button></div>'+
+ '<div class="muted" style="margin-bottom:14px">Dos formas, y conviene tener las dos.</div>'+
+ '<div class="card tight" style="margin-bottom:12px"><h2>1. Recordatorio en el calendario</h2>'+
+  '<div class="muted" style="margin-bottom:10px">El más confiable: te avisa aunque la app esté cerrada, todos los días, con la alarma de tu iPhone. Se añade una vez y queda.</div>'+
+  '<button class="btn" onclick="icsAyuno()">Crear el recordatorio diario</button></div>'+
+ '<div class="card tight"><h2>2. Aviso desde la app</h2>'+
+  '<div class="muted" style="margin-bottom:10px">'+
+   (st==='granted'
+    ? 'Activado. Funciona mientras la app esté abierta o recién cerrada; iOS no garantiza el aviso si lleva horas cerrada.'
+    : st==='no'
+      ? 'Tu navegador no lo permite. Usa el recordatorio de calendario.'
+      : 'Te avisa cuando se cumplan tus horas, siempre que la app siga abierta en segundo plano. iOS es estricto con esto, por eso el calendario es el respaldo.')+
+  '</div>'+
+  (st==='granted'
+   ? '<div class="flag teal"><span>✓</span><div>Avisos activados en este teléfono.</div></div>'
+   : (st==='no'?'':'<button class="btn ghost" onclick="pedirAviso()">Activar avisos</button>'))+
+ '</div>'+
+ '<div class="faint" style="margin-top:14px">Nada de esto sale de tu teléfono: no hay servidor que envíe nada, es tu propio dispositivo el que se avisa a sí mismo.</div>');
+}
+
 /* ---------- Medicación y suplementos ---------- */
 function medsSheet(){
  const l=day(CUR), m=l.meds||(l.meds={}), ms=S.cfg.meds||[];
@@ -2367,7 +2491,7 @@ function rPlanCard(){
 /* ---------- 12. Arranque ---------- */
 (function init(){
  const th=localStorage.getItem('plandm_theme'); if(th)document.documentElement.setAttribute('data-theme',th);
- pedirPersistencia(); recuperarSiVacio();
+ pedirPersistencia(); recuperarSiVacio(); programarAviso();
  drawTabs(); render();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){const t=today();if(t!==CUR&&CUR===ymd(new Date(Date.now()-864e5))){}CUR=today();render();}});
 })();
